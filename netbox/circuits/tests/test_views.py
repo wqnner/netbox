@@ -200,6 +200,7 @@ class ProviderNetworkTestCase(ViewTestCases.PrimaryObjectViewTestCase):
 class CircuitTerminationTestCase(
     ViewTestCases.EditObjectViewTestCase,
     ViewTestCases.DeleteObjectViewTestCase,
+    ViewTestCases.CustomFieldViewTestCase,
 ):
     model = CircuitTermination
 

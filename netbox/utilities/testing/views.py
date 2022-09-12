@@ -3,8 +3,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.test import override_settings
 from django.urls import reverse
 
-from extras.choices import ObjectChangeActionChoices
-from extras.models import ObjectChange
+from extras.choices import ObjectChangeActionChoices, CustomFieldTypeChoices
+from extras.models import ObjectChange, CustomField
 from users.models import ObjectPermission
 from .base import ModelTestCase
 from .utils import disable_warnings, post_data
@@ -857,10 +857,46 @@ class ViewTestCases:
             for i, instance in enumerate(self._get_queryset().filter(pk__in=pk_list)):
                 self.assertEqual(instance.name, f'{objects[i].name}X')
 
-    class PrimaryObjectViewTestCase(
+    class CustomFieldViewTestCase(ModelViewTestCase):
+        """
+        Edit a single existing instance.
+
+        :form_data: Data to be used when updating the first existing object.
+        """
+        form_data = {}
+
+        @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
+        def test_save_custom_field(self):
+            initial_count = self._get_queryset().count()
+
+            # Assign unconstrained permission
+            obj_perm = ObjectPermission(
+                name='Test permission',
+                actions=['add']
+            )
+            obj_perm.save()
+            obj_perm.users.add(self.user)
+            obj_perm.object_types.add(ContentType.objects.get_for_model(self.model))
+
+            cf = CustomField.objects.create(type=CustomFieldTypeChoices.TYPE_TEXT, name='testcf_field', default='foo', required=False)
+            cf.content_types.set([ContentType.objects.get_for_model(self.model)])
+            data = self.form_data
+            cf_name = f'cf_{cf.name}'
+            data[cf_name] = "XYZZY"
+
+            # Try POST with custom field data
+            request = {
+                'path': self._get_url('add'),
+                'data': post_data(data),
+            }
+            self.assertHttpStatus(self.client.post(**request), 302)
+            self.assertEqual(initial_count + 1, self._get_queryset().count())
+            instance = self._get_queryset().order_by('pk').last()
+            self.assertEqual(instance.custom_field_data[cf.name], data[cf_name])
+
+    class BaseObjectViewTestCase(
         GetObjectViewTestCase,
         GetObjectChangelogViewTestCase,
-        CreateObjectViewTestCase,
         EditObjectViewTestCase,
         DeleteObjectViewTestCase,
         ListObjectsViewTestCase,
@@ -869,20 +905,24 @@ class ViewTestCases:
         BulkDeleteObjectsViewTestCase,
     ):
         """
+        Base TestCase suitable for most views
+        """
+        maxDiff = None
+
+    class PrimaryObjectViewTestCase(
+        BaseObjectViewTestCase,
+        CreateObjectViewTestCase,
+        CustomFieldViewTestCase,
+    ):
+        """
         TestCase suitable for testing all standard View functions for primary objects
         """
         maxDiff = None
 
     class OrganizationalObjectViewTestCase(
-        GetObjectViewTestCase,
-        GetObjectChangelogViewTestCase,
+        BaseObjectViewTestCase,
         CreateObjectViewTestCase,
-        EditObjectViewTestCase,
-        DeleteObjectViewTestCase,
-        ListObjectsViewTestCase,
-        BulkImportObjectsViewTestCase,
-        BulkEditObjectsViewTestCase,
-        BulkDeleteObjectsViewTestCase,
+        CustomFieldViewTestCase,
     ):
         """
         TestCase suitable for all organizational objects
@@ -903,16 +943,9 @@ class ViewTestCases:
         maxDiff = None
 
     class DeviceComponentViewTestCase(
-        GetObjectViewTestCase,
-        GetObjectChangelogViewTestCase,
-        EditObjectViewTestCase,
-        DeleteObjectViewTestCase,
-        ListObjectsViewTestCase,
+        BaseObjectViewTestCase,
         CreateMultipleObjectsViewTestCase,
-        BulkImportObjectsViewTestCase,
-        BulkEditObjectsViewTestCase,
         BulkRenameObjectsViewTestCase,
-        BulkDeleteObjectsViewTestCase,
     ):
         """
         TestCase suitable for testing device component models (ConsolePorts, Interfaces, etc.)

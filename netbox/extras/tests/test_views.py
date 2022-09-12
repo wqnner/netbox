@@ -11,7 +11,7 @@ from extras.models import *
 from utilities.testing import ViewTestCases, TestCase
 
 
-class CustomFieldTestCase(ViewTestCases.PrimaryObjectViewTestCase):
+class CustomFieldTestCase(ViewTestCases.BaseObjectViewTestCase, ViewTestCases.CreateObjectViewTestCase):
     model = CustomField
 
     @classmethod
@@ -53,7 +53,7 @@ class CustomFieldTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
 
-class CustomLinkTestCase(ViewTestCases.PrimaryObjectViewTestCase):
+class CustomLinkTestCase(ViewTestCases.BaseObjectViewTestCase, ViewTestCases.CreateObjectViewTestCase):
     model = CustomLink
 
     @classmethod
@@ -90,7 +90,7 @@ class CustomLinkTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
 
-class ExportTemplateTestCase(ViewTestCases.PrimaryObjectViewTestCase):
+class ExportTemplateTestCase(ViewTestCases.BaseObjectViewTestCase, ViewTestCases.CreateObjectViewTestCase):
     model = ExportTemplate
 
     @classmethod
@@ -124,7 +124,7 @@ class ExportTemplateTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
 
-class WebhookTestCase(ViewTestCases.PrimaryObjectViewTestCase):
+class WebhookTestCase(ViewTestCases.BaseObjectViewTestCase, ViewTestCases.CreateObjectViewTestCase):
     model = Webhook
 
     @classmethod
@@ -168,7 +168,7 @@ class WebhookTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         }
 
 
-class TagTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
+class TagTestCase(ViewTestCases.BaseObjectViewTestCase, ViewTestCases.CreateObjectViewTestCase):
     model = Tag
 
     @classmethod
@@ -291,7 +291,8 @@ class JournalEntryTestCase(
     ViewTestCases.DeleteObjectViewTestCase,
     ViewTestCases.ListObjectsViewTestCase,
     ViewTestCases.BulkEditObjectsViewTestCase,
-    ViewTestCases.BulkDeleteObjectsViewTestCase
+    ViewTestCases.BulkDeleteObjectsViewTestCase,
+    ViewTestCases.CustomFieldViewTestCase,
 ):
     model = JournalEntry
 
