@@ -15,10 +15,13 @@ CABLE_LENGTH = """
 {% if record.length %}{{ record.length|simplify_decimal }} {{ record.length_unit }}{% endif %}
 """
 
+WEIGHT = """
+{% load helpers %}
+{% if value %}{{ value|simplify_decimal }} {{ record.weight_unit }}{% endif %}
+"""
+
 DEVICE_LINK = """
-<a href="{% url 'dcim:device' pk=record.pk %}">
-    {{ record.name|default:'<span class="badge bg-info">Unnamed device</span>' }}
-</a>
+{{ value|default:'<span class="badge bg-info">Unnamed device</span>' }}
 """
 
 DEVICEBAY_STATUS = """
@@ -239,7 +242,7 @@ INTERFACE_BUTTONS = """
         <li><a class="dropdown-item" href="{% url 'dcim:inventoryitem_add' %}?device={{ record.device_id }}&component_type={{ record|content_type_id }}&component_id={{ record.pk }}&return_url={% url 'dcim:device_interfaces' pk=object.pk %}">Inventory Item</a></li>
       {% endif %}
       {% if perms.dcim.add_interface %}
-        <li><a class="dropdown-item" href="{% url 'dcim:interface_add' %}?device={{ record.device_id }}&parent={{ record.pk }}&name_pattern={{ record.name }}.&type=virtual&return_url={% url 'dcim:device_interfaces' pk=object.pk %}">Child Interface</a></li>
+        <li><a class="dropdown-item" href="{% url 'dcim:interface_add' %}?device={{ record.device_id }}&parent={{ record.pk }}&name={{ record.name }}.&type=virtual&return_url={% url 'dcim:device_interfaces' pk=object.pk %}">Child Interface</a></li>
       {% endif %}
       {% if perms.ipam.add_l2vpntermination %}
         <li><a class="dropdown-item" href="{% url 'ipam:l2vpntermination_add' %}?device={{ object.pk }}&interface={{ record.pk }}&return_url={% url 'dcim:device_interfaces' pk=object.pk %}">L2VPN Termination</a></li>

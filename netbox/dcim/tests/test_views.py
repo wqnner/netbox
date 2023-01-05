@@ -1,6 +1,10 @@
 from decimal import Decimal
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    # Python 3.8
+    from backports.zoneinfo import ZoneInfo
 
-import pytz
 import yaml
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -12,8 +16,8 @@ from dcim.choices import *
 from dcim.constants import *
 from dcim.models import *
 from ipam.models import ASN, RIR, VLAN, VRF
-from netbox.api.serializers import GenericObjectSerializer
 from tenancy.models import Tenant
+from utilities.choices import ImportFormatChoices
 from utilities.testing import ViewTestCases, create_tags, create_test_device, post_data
 from wireless.models import WirelessLAN
 
@@ -48,6 +52,13 @@ class RegionTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             "Region 4,region-4,Fourth region",
             "Region 5,region-5,Fifth region",
             "Region 6,region-6,Sixth region",
+        )
+
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{regions[0].pk},Region 7,Fourth region7",
+            f"{regions[1].pk},Region 8,Fifth region8",
+            f"{regions[2].pk},Region 0,Sixth region9",
         )
 
         cls.bulk_edit_data = {
@@ -85,6 +96,13 @@ class SiteGroupTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             "Site Group 4,site-group-4,Fourth site group",
             "Site Group 5,site-group-5,Fifth site group",
             "Site Group 6,site-group-6,Sixth site group",
+        )
+
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{sitegroups[0].pk},Site Group 7,Fourth site group7",
+            f"{sitegroups[1].pk},Site Group 8,Fifth site group8",
+            f"{sitegroups[2].pk},Site Group 0,Sixth site group9",
         )
 
         cls.bulk_edit_data = {
@@ -139,7 +157,7 @@ class SiteTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             'tenant': None,
             'facility': 'Facility X',
             'asns': [asns[6].pk, asns[7].pk],
-            'time_zone': pytz.UTC,
+            'time_zone': ZoneInfo('UTC'),
             'description': 'Site description',
             'physical_address': '742 Evergreen Terrace, Springfield, USA',
             'shipping_address': '742 Evergreen Terrace, Springfield, USA',
@@ -156,12 +174,19 @@ class SiteTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             "Site 6,site-6,staging",
         )
 
+        cls.csv_update_data = (
+            "id,name,status",
+            f"{sites[0].pk},Site 7,staging",
+            f"{sites[1].pk},Site 8,planned",
+            f"{sites[2].pk},Site 9,active",
+        )
+
         cls.bulk_edit_data = {
             'status': SiteStatusChoices.STATUS_PLANNED,
             'region': regions[1].pk,
             'group': groups[1].pk,
             'tenant': None,
-            'time_zone': pytz.timezone('US/Eastern'),
+            'time_zone': ZoneInfo('US/Eastern'),
             'description': 'New description',
         }
 
@@ -202,6 +227,13 @@ class LocationTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             "Site 1,Tenant 1,Location 6,location-6,planned,Sixth location",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{locations[0].pk},Location 7,Fourth location7",
+            f"{locations[1].pk},Location 8,Fifth location8",
+            f"{locations[2].pk},Location 0,Sixth location9",
+        )
+
         cls.bulk_edit_data = {
             'description': 'New description',
         }
@@ -213,11 +245,12 @@ class RackRoleTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
     @classmethod
     def setUpTestData(cls):
 
-        RackRole.objects.bulk_create([
+        rack_roles = (
             RackRole(name='Rack Role 1', slug='rack-role-1'),
             RackRole(name='Rack Role 2', slug='rack-role-2'),
             RackRole(name='Rack Role 3', slug='rack-role-3'),
-        ])
+        )
+        RackRole.objects.bulk_create(rack_roles)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -234,6 +267,13 @@ class RackRoleTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             "Rack Role 4,rack-role-4,ff0000",
             "Rack Role 5,rack-role-5,00ff00",
             "Rack Role 6,rack-role-6,0000ff",
+        )
+
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{rack_roles[0].pk},Rack Role 7,New description7",
+            f"{rack_roles[1].pk},Rack Role 8,New description8",
+            f"{rack_roles[2].pk},Rack Role 9,New description9",
         )
 
         cls.bulk_edit_data = {
@@ -259,11 +299,12 @@ class RackReservationTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         rack = Rack(name='Rack 1', site=site, location=location)
         rack.save()
 
-        RackReservation.objects.bulk_create([
+        rack_reservations = (
             RackReservation(rack=rack, user=user2, units=[1, 2, 3], description='Reservation 1'),
             RackReservation(rack=rack, user=user2, units=[4, 5, 6], description='Reservation 2'),
             RackReservation(rack=rack, user=user2, units=[7, 8, 9], description='Reservation 3'),
-        ])
+        )
+        RackReservation.objects.bulk_create(rack_reservations)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -281,6 +322,13 @@ class RackReservationTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             'Site 1,Location 1,Rack 1,"10,11,12",Reservation 1',
             'Site 1,Location 1,Rack 1,"13,14,15",Reservation 2',
             'Site 1,Location 1,Rack 1,"16,17,18",Reservation 3',
+        )
+
+        cls.csv_update_data = (
+            'id,description',
+            f'{rack_reservations[0].pk},New description1',
+            f'{rack_reservations[1].pk},New description2',
+            f'{rack_reservations[2].pk},New description3',
         )
 
         cls.bulk_edit_data = {
@@ -315,11 +363,12 @@ class RackTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         )
         RackRole.objects.bulk_create(rackroles)
 
-        Rack.objects.bulk_create((
+        racks = (
             Rack(name='Rack 1', site=sites[0]),
             Rack(name='Rack 2', site=sites[0]),
             Rack(name='Rack 3', site=sites[0]),
-        ))
+        )
+        Rack.objects.bulk_create(racks)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -340,15 +389,25 @@ class RackTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             'outer_width': 500,
             'outer_depth': 500,
             'outer_unit': RackDimensionUnitChoices.UNIT_MILLIMETER,
+            'weight': 100,
+            'max_weight': 2000,
+            'weight_unit': WeightUnitChoices.UNIT_POUND,
             'comments': 'Some comments',
             'tags': [t.pk for t in tags],
         }
 
         cls.csv_data = (
-            "site,location,name,status,width,u_height",
-            "Site 1,,Rack 4,active,19,42",
-            "Site 1,Location 1,Rack 5,active,19,42",
-            "Site 2,Location 2,Rack 6,active,19,42",
+            "site,location,name,status,width,u_height,weight,max_weight,weight_unit",
+            "Site 1,,Rack 4,active,19,42,100,2000,kg",
+            "Site 1,Location 1,Rack 5,active,19,42,100,2000,kg",
+            "Site 2,Location 2,Rack 6,active,19,42,100,2000,kg",
+        )
+
+        cls.csv_update_data = (
+            "id,name,status",
+            f"{racks[0].pk},Rack 7,{RackStatusChoices.STATUS_DEPRECATED}",
+            f"{racks[1].pk},Rack 8,{RackStatusChoices.STATUS_DEPRECATED}",
+            f"{racks[2].pk},Rack 9,{RackStatusChoices.STATUS_DEPRECATED}",
         )
 
         cls.bulk_edit_data = {
@@ -365,6 +424,9 @@ class RackTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             'outer_width': 30,
             'outer_depth': 30,
             'outer_unit': RackDimensionUnitChoices.UNIT_INCH,
+            'weight': 200,
+            'max_weight': 4000,
+            'weight_unit': WeightUnitChoices.UNIT_POUND,
             'comments': 'New comments',
         }
 
@@ -383,11 +445,12 @@ class ManufacturerTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
     @classmethod
     def setUpTestData(cls):
 
-        Manufacturer.objects.bulk_create([
+        manufacturers = (
             Manufacturer(name='Manufacturer 1', slug='manufacturer-1'),
             Manufacturer(name='Manufacturer 2', slug='manufacturer-2'),
             Manufacturer(name='Manufacturer 3', slug='manufacturer-3'),
-        ])
+        )
+        Manufacturer.objects.bulk_create(manufacturers)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -403,6 +466,13 @@ class ManufacturerTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             "Manufacturer 4,manufacturer-4,Fourth manufacturer",
             "Manufacturer 5,manufacturer-5,Fifth manufacturer",
             "Manufacturer 6,manufacturer-6,Sixth manufacturer",
+        )
+
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{manufacturers[0].pk},Manufacturer 7,Fourth manufacturer7",
+            f"{manufacturers[1].pk},Manufacturer 8,Fifth manufacturer8",
+            f"{manufacturers[2].pk},Manufacturer 9,Sixth manufacturer9",
         )
 
         cls.bulk_edit_data = {
@@ -1082,31 +1152,28 @@ front-ports:
 
 class ConsolePortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = ConsolePortTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
-        devicetypes = (
-            DeviceType(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1'),
-            DeviceType(manufacturer=manufacturer, model='Device Type 2', slug='device-type-2'),
-        )
-        DeviceType.objects.bulk_create(devicetypes)
+        devicetype = DeviceType.objects.create(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1')
 
         ConsolePortTemplate.objects.bulk_create((
-            ConsolePortTemplate(device_type=devicetypes[0], name='Console Port Template 1'),
-            ConsolePortTemplate(device_type=devicetypes[0], name='Console Port Template 2'),
-            ConsolePortTemplate(device_type=devicetypes[0], name='Console Port Template 3'),
+            ConsolePortTemplate(device_type=devicetype, name='Console Port Template 1'),
+            ConsolePortTemplate(device_type=devicetype, name='Console Port Template 2'),
+            ConsolePortTemplate(device_type=devicetype, name='Console Port Template 3'),
         ))
 
         cls.form_data = {
-            'device_type': devicetypes[1].pk,
+            'device_type': devicetype.pk,
             'name': 'Console Port Template X',
             'type': ConsolePortTypeChoices.TYPE_RJ45,
         }
 
         cls.bulk_create_data = {
-            'device_type': devicetypes[1].pk,
-            'name_pattern': 'Console Port Template [4-6]',
+            'device_type': devicetype.pk,
+            'name': 'Console Port Template [4-6]',
             'type': ConsolePortTypeChoices.TYPE_RJ45,
         }
 
@@ -1117,31 +1184,28 @@ class ConsolePortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestC
 
 class ConsoleServerPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = ConsoleServerPortTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
-        devicetypes = (
-            DeviceType(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1'),
-            DeviceType(manufacturer=manufacturer, model='Device Type 2', slug='device-type-2'),
-        )
-        DeviceType.objects.bulk_create(devicetypes)
+        devicetype = DeviceType.objects.create(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1')
 
         ConsoleServerPortTemplate.objects.bulk_create((
-            ConsoleServerPortTemplate(device_type=devicetypes[0], name='Console Server Port Template 1'),
-            ConsoleServerPortTemplate(device_type=devicetypes[0], name='Console Server Port Template 2'),
-            ConsoleServerPortTemplate(device_type=devicetypes[0], name='Console Server Port Template 3'),
+            ConsoleServerPortTemplate(device_type=devicetype, name='Console Server Port Template 1'),
+            ConsoleServerPortTemplate(device_type=devicetype, name='Console Server Port Template 2'),
+            ConsoleServerPortTemplate(device_type=devicetype, name='Console Server Port Template 3'),
         ))
 
         cls.form_data = {
-            'device_type': devicetypes[1].pk,
+            'device_type': devicetype.pk,
             'name': 'Console Server Port Template X',
             'type': ConsolePortTypeChoices.TYPE_RJ45,
         }
 
         cls.bulk_create_data = {
-            'device_type': devicetypes[1].pk,
-            'name_pattern': 'Console Server Port Template [4-6]',
+            'device_type': devicetype.pk,
+            'name': 'Console Server Port Template [4-6]',
             'type': ConsolePortTypeChoices.TYPE_RJ45,
         }
 
@@ -1152,24 +1216,21 @@ class ConsoleServerPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateVie
 
 class PowerPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = PowerPortTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
-        devicetypes = (
-            DeviceType(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1'),
-            DeviceType(manufacturer=manufacturer, model='Device Type 2', slug='device-type-2'),
-        )
-        DeviceType.objects.bulk_create(devicetypes)
+        devicetype = DeviceType.objects.create(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1')
 
         PowerPortTemplate.objects.bulk_create((
-            PowerPortTemplate(device_type=devicetypes[0], name='Power Port Template 1'),
-            PowerPortTemplate(device_type=devicetypes[0], name='Power Port Template 2'),
-            PowerPortTemplate(device_type=devicetypes[0], name='Power Port Template 3'),
+            PowerPortTemplate(device_type=devicetype, name='Power Port Template 1'),
+            PowerPortTemplate(device_type=devicetype, name='Power Port Template 2'),
+            PowerPortTemplate(device_type=devicetype, name='Power Port Template 3'),
         ))
 
         cls.form_data = {
-            'device_type': devicetypes[1].pk,
+            'device_type': devicetype.pk,
             'name': 'Power Port Template X',
             'type': PowerPortTypeChoices.TYPE_IEC_C14,
             'maximum_draw': 100,
@@ -1177,8 +1238,8 @@ class PowerPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCas
         }
 
         cls.bulk_create_data = {
-            'device_type': devicetypes[1].pk,
-            'name_pattern': 'Power Port Template [4-6]',
+            'device_type': devicetype.pk,
+            'name': 'Power Port Template [4-6]',
             'type': PowerPortTypeChoices.TYPE_IEC_C14,
             'maximum_draw': 100,
             'allocated_draw': 50,
@@ -1193,6 +1254,7 @@ class PowerPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCas
 
 class PowerOutletTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = PowerOutletTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
@@ -1220,7 +1282,7 @@ class PowerOutletTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestC
 
         cls.bulk_create_data = {
             'device_type': devicetype.pk,
-            'name_pattern': 'Power Outlet Template [4-6]',
+            'name': 'Power Outlet Template [4-6]',
             'type': PowerOutletTypeChoices.TYPE_IEC_C13,
             'power_port': powerports[0].pk,
             'feed_leg': PowerOutletFeedLegChoices.FEED_LEG_B,
@@ -1234,34 +1296,31 @@ class PowerOutletTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestC
 
 class InterfaceTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = InterfaceTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
-        devicetypes = (
-            DeviceType(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1'),
-            DeviceType(manufacturer=manufacturer, model='Device Type 2', slug='device-type-2'),
-        )
-        DeviceType.objects.bulk_create(devicetypes)
+        devicetype = DeviceType.objects.create(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1')
 
         InterfaceTemplate.objects.bulk_create((
-            InterfaceTemplate(device_type=devicetypes[0], name='Interface Template 1'),
-            InterfaceTemplate(device_type=devicetypes[0], name='Interface Template 2'),
-            InterfaceTemplate(device_type=devicetypes[0], name='Interface Template 3'),
+            InterfaceTemplate(device_type=devicetype, name='Interface Template 1'),
+            InterfaceTemplate(device_type=devicetype, name='Interface Template 2'),
+            InterfaceTemplate(device_type=devicetype, name='Interface Template 3'),
         ))
 
         cls.form_data = {
-            'device_type': devicetypes[1].pk,
+            'device_type': devicetype.pk,
             'name': 'Interface Template X',
             'type': InterfaceTypeChoices.TYPE_1GE_GBIC,
             'mgmt_only': True,
         }
 
         cls.bulk_create_data = {
-            'device_type': devicetypes[1].pk,
-            'name_pattern': 'Interface Template [4-6]',
+            'device_type': devicetype.pk,
+            'name': 'Interface Template [4-6]',
             # Test that a label can be applied to each generated interface templates
-            'label_pattern': 'Interface Template Label [3-5]',
+            'label': 'Interface Template Label [3-5]',
             'type': InterfaceTypeChoices.TYPE_1GE_GBIC,
             'mgmt_only': True,
         }
@@ -1274,6 +1333,7 @@ class InterfaceTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCas
 
 class FrontPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = FrontPortTemplate
+    validation_excluded_fields = ('name', 'label', 'rear_port')
 
     @classmethod
     def setUpTestData(cls):
@@ -1306,11 +1366,9 @@ class FrontPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCas
 
         cls.bulk_create_data = {
             'device_type': devicetype.pk,
-            'name_pattern': 'Front Port [4-6]',
+            'name': 'Front Port [4-6]',
             'type': PortTypeChoices.TYPE_8P8C,
-            'rear_port_set': [
-                '{}:1'.format(rp.pk) for rp in rearports[3:6]
-            ],
+            'rear_port': [f'{rp.pk}:1' for rp in rearports[3:6]],
         }
 
         cls.bulk_edit_data = {
@@ -1320,32 +1378,29 @@ class FrontPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCas
 
 class RearPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = RearPortTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
-        devicetypes = (
-            DeviceType(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1'),
-            DeviceType(manufacturer=manufacturer, model='Device Type 2', slug='device-type-2'),
-        )
-        DeviceType.objects.bulk_create(devicetypes)
+        devicetype = DeviceType.objects.create(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1')
 
         RearPortTemplate.objects.bulk_create((
-            RearPortTemplate(device_type=devicetypes[0], name='Rear Port Template 1'),
-            RearPortTemplate(device_type=devicetypes[0], name='Rear Port Template 2'),
-            RearPortTemplate(device_type=devicetypes[0], name='Rear Port Template 3'),
+            RearPortTemplate(device_type=devicetype, name='Rear Port Template 1'),
+            RearPortTemplate(device_type=devicetype, name='Rear Port Template 2'),
+            RearPortTemplate(device_type=devicetype, name='Rear Port Template 3'),
         ))
 
         cls.form_data = {
-            'device_type': devicetypes[1].pk,
+            'device_type': devicetype.pk,
             'name': 'Rear Port Template X',
             'type': PortTypeChoices.TYPE_8P8C,
             'positions': 2,
         }
 
         cls.bulk_create_data = {
-            'device_type': devicetypes[1].pk,
-            'name_pattern': 'Rear Port Template [4-6]',
+            'device_type': devicetype.pk,
+            'name': 'Rear Port Template [4-6]',
             'type': PortTypeChoices.TYPE_8P8C,
             'positions': 2,
         }
@@ -1357,30 +1412,27 @@ class RearPortTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase
 
 class ModuleBayTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = ModuleBayTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
-        devicetypes = (
-            DeviceType(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1'),
-            DeviceType(manufacturer=manufacturer, model='Device Type 2', slug='device-type-2'),
-        )
-        DeviceType.objects.bulk_create(devicetypes)
+        devicetype = DeviceType.objects.create(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1')
 
         ModuleBayTemplate.objects.bulk_create((
-            ModuleBayTemplate(device_type=devicetypes[0], name='Module Bay Template 1'),
-            ModuleBayTemplate(device_type=devicetypes[0], name='Module Bay Template 2'),
-            ModuleBayTemplate(device_type=devicetypes[0], name='Module Bay Template 3'),
+            ModuleBayTemplate(device_type=devicetype, name='Module Bay Template 1'),
+            ModuleBayTemplate(device_type=devicetype, name='Module Bay Template 2'),
+            ModuleBayTemplate(device_type=devicetype, name='Module Bay Template 3'),
         ))
 
         cls.form_data = {
-            'device_type': devicetypes[1].pk,
+            'device_type': devicetype.pk,
             'name': 'Module Bay Template X',
         }
 
         cls.bulk_create_data = {
-            'device_type': devicetypes[1].pk,
-            'name_pattern': 'Module Bay Template [4-6]',
+            'device_type': devicetype.pk,
+            'name': 'Module Bay Template [4-6]',
         }
 
         cls.bulk_edit_data = {
@@ -1390,30 +1442,27 @@ class ModuleBayTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCas
 
 class DeviceBayTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = DeviceBayTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
-        devicetypes = (
-            DeviceType(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1', subdevice_role=SubdeviceRoleChoices.ROLE_PARENT),
-            DeviceType(manufacturer=manufacturer, model='Device Type 2', slug='device-type-2', subdevice_role=SubdeviceRoleChoices.ROLE_PARENT),
-        )
-        DeviceType.objects.bulk_create(devicetypes)
+        devicetype = DeviceType.objects.create(manufacturer=manufacturer, model='Device Type 1', slug='device-type-1', subdevice_role=SubdeviceRoleChoices.ROLE_PARENT)
 
         DeviceBayTemplate.objects.bulk_create((
-            DeviceBayTemplate(device_type=devicetypes[0], name='Device Bay Template 1'),
-            DeviceBayTemplate(device_type=devicetypes[0], name='Device Bay Template 2'),
-            DeviceBayTemplate(device_type=devicetypes[0], name='Device Bay Template 3'),
+            DeviceBayTemplate(device_type=devicetype, name='Device Bay Template 1'),
+            DeviceBayTemplate(device_type=devicetype, name='Device Bay Template 2'),
+            DeviceBayTemplate(device_type=devicetype, name='Device Bay Template 3'),
         ))
 
         cls.form_data = {
-            'device_type': devicetypes[1].pk,
+            'device_type': devicetype.pk,
             'name': 'Device Bay Template X',
         }
 
         cls.bulk_create_data = {
-            'device_type': devicetypes[1].pk,
-            'name_pattern': 'Device Bay Template [4-6]',
+            'device_type': devicetype.pk,
+            'name': 'Device Bay Template [4-6]',
         }
 
         cls.bulk_edit_data = {
@@ -1423,6 +1472,7 @@ class DeviceBayTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCas
 
 class InventoryItemTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTestCase):
     model = InventoryItemTemplate
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
@@ -1431,30 +1481,25 @@ class InventoryItemTemplateTestCase(ViewTestCases.DeviceComponentTemplateViewTes
             Manufacturer(name='Manufacturer 2', slug='manufacturer-2'),
         )
         Manufacturer.objects.bulk_create(manufacturers)
-
-        devicetypes = (
-            DeviceType(manufacturer=manufacturers[0], model='Device Type 1', slug='device-type-1'),
-            DeviceType(manufacturer=manufacturers[0], model='Device Type 2', slug='device-type-2'),
-        )
-        DeviceType.objects.bulk_create(devicetypes)
+        devicetype = DeviceType.objects.create(manufacturer=manufacturers[0], model='Device Type 1', slug='device-type-1')
 
         inventory_item_templates = (
-            InventoryItemTemplate(device_type=devicetypes[0], name='Inventory Item Template 1', manufacturer=manufacturers[0]),
-            InventoryItemTemplate(device_type=devicetypes[0], name='Inventory Item Template 2', manufacturer=manufacturers[0]),
-            InventoryItemTemplate(device_type=devicetypes[0], name='Inventory Item Template 3', manufacturer=manufacturers[0]),
+            InventoryItemTemplate(device_type=devicetype, name='Inventory Item Template 1', manufacturer=manufacturers[0]),
+            InventoryItemTemplate(device_type=devicetype, name='Inventory Item Template 2', manufacturer=manufacturers[0]),
+            InventoryItemTemplate(device_type=devicetype, name='Inventory Item Template 3', manufacturer=manufacturers[0]),
         )
         for item in inventory_item_templates:
             item.save()
 
         cls.form_data = {
-            'device_type': devicetypes[1].pk,
+            'device_type': devicetype.pk,
             'name': 'Inventory Item Template X',
             'manufacturer': manufacturers[1].pk,
         }
 
         cls.bulk_create_data = {
-            'device_type': devicetypes[1].pk,
-            'name_pattern': 'Inventory Item Template [4-6]',
+            'device_type': devicetype.pk,
+            'name': 'Inventory Item Template [4-6]',
             'manufacturer': manufacturers[1].pk,
         }
 
@@ -1469,11 +1514,12 @@ class DeviceRoleTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
     @classmethod
     def setUpTestData(cls):
 
-        DeviceRole.objects.bulk_create([
+        device_roles = (
             DeviceRole(name='Device Role 1', slug='device-role-1'),
             DeviceRole(name='Device Role 2', slug='device-role-2'),
             DeviceRole(name='Device Role 3', slug='device-role-3'),
-        ])
+        )
+        DeviceRole.objects.bulk_create(device_roles)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -1493,6 +1539,13 @@ class DeviceRoleTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             "Device Role 6,device-role-6,0000ff",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{device_roles[0].pk},Device Role 7,New description7",
+            f"{device_roles[1].pk},Device Role 8,New description8",
+            f"{device_roles[2].pk},Device Role 9,New description9",
+        )
+
         cls.bulk_edit_data = {
             'color': '00ff00',
             'description': 'New description',
@@ -1507,11 +1560,12 @@ class PlatformTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
 
         manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
 
-        Platform.objects.bulk_create([
+        platforms = (
             Platform(name='Platform 1', slug='platform-1', manufacturer=manufacturer),
             Platform(name='Platform 2', slug='platform-2', manufacturer=manufacturer),
             Platform(name='Platform 3', slug='platform-3', manufacturer=manufacturer),
-        ])
+        )
+        Platform.objects.bulk_create(platforms)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -1530,6 +1584,13 @@ class PlatformTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             "Platform 4,platform-4,Fourth platform",
             "Platform 5,platform-5,Fifth platform",
             "Platform 6,platform-6,Sixth platform",
+        )
+
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{platforms[0].pk},Platform 7,Fourth platform7",
+            f"{platforms[1].pk},Platform 8,Fifth platform8",
+            f"{platforms[2].pk},Platform 9,Sixth platform9",
         )
 
         cls.bulk_edit_data = {
@@ -1579,11 +1640,12 @@ class DeviceTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         )
         Platform.objects.bulk_create(platforms)
 
-        Device.objects.bulk_create([
+        devices = (
             Device(name='Device 1', site=sites[0], rack=racks[0], device_type=devicetypes[0], device_role=deviceroles[0], platform=platforms[0]),
             Device(name='Device 2', site=sites[0], rack=racks[0], device_type=devicetypes[0], device_role=deviceroles[0], platform=platforms[0]),
             Device(name='Device 3', site=sites[0], rack=racks[0], device_type=devicetypes[0], device_role=deviceroles[0], platform=platforms[0]),
-        ])
+        )
+        Device.objects.bulk_create(devices)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -1618,6 +1680,13 @@ class DeviceTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             "Device Role 1,Manufacturer 1,Device Type 1,active,Device 4,Site 1,Location 1,Rack 1,10,front,Virtual Chassis 1,1,10",
             "Device Role 1,Manufacturer 1,Device Type 1,active,Device 5,Site 1,Location 1,Rack 1,20,front,Virtual Chassis 1,2,20",
             "Device Role 1,Manufacturer 1,Device Type 1,active,Device 6,Site 1,Location 1,Rack 1,30,front,Virtual Chassis 1,3,30",
+        )
+
+        cls.csv_update_data = (
+            "id,status",
+            f"{devices[0].pk},{DeviceStatusChoices.STATUS_DECOMMISSIONING}",
+            f"{devices[1].pk},{DeviceStatusChoices.STATUS_DECOMMISSIONING}",
+            f"{devices[2].pk},{DeviceStatusChoices.STATUS_DECOMMISSIONING}",
         )
 
         cls.bulk_edit_data = {
@@ -1803,10 +1872,12 @@ class ModuleTestCase(
             ModuleBay(device=devices[0], name='Module Bay 2'),
             ModuleBay(device=devices[0], name='Module Bay 3'),
             ModuleBay(device=devices[0], name='Module Bay 4'),
+            ModuleBay(device=devices[0], name='Module Bay 5'),
             ModuleBay(device=devices[1], name='Module Bay 1'),
             ModuleBay(device=devices[1], name='Module Bay 2'),
             ModuleBay(device=devices[1], name='Module Bay 3'),
             ModuleBay(device=devices[1], name='Module Bay 4'),
+            ModuleBay(device=devices[1], name='Module Bay 5'),
         )
         ModuleBay.objects.bulk_create(module_bays)
 
@@ -1820,22 +1891,31 @@ class ModuleTestCase(
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
         cls.form_data = {
-            'device': devices[1].pk,
+            'device': devices[0].pk,
             'module_bay': module_bays[3].pk,
             'module_type': module_types[0].pk,
+            'status': ModuleStatusChoices.STATUS_ACTIVE,
             'serial': 'A',
             'tags': [t.pk for t in tags],
         }
 
         cls.bulk_edit_data = {
             'module_type': module_types[3].pk,
+            'status': ModuleStatusChoices.STATUS_PLANNED,
         }
 
         cls.csv_data = (
-            "device,module_bay,module_type,serial,asset_tag",
-            "Device 2,Module Bay 1,Module Type 1,A,A",
-            "Device 2,Module Bay 2,Module Type 2,B,B",
-            "Device 2,Module Bay 3,Module Type 3,C,C",
+            "device,module_bay,module_type,status,serial,asset_tag",
+            "Device 2,Module Bay 1,Module Type 1,active,A,A",
+            "Device 2,Module Bay 2,Module Type 2,planned,B,B",
+            "Device 2,Module Bay 3,Module Type 3,failed,C,C",
+        )
+
+        cls.csv_update_data = (
+            "id,status,serial",
+            f"{modules[0].pk},offline,Serial 2",
+            f"{modules[1].pk},offline,Serial 3",
+            f"{modules[2].pk},offline,Serial 1",
         )
 
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
@@ -1872,6 +1952,54 @@ class ModuleTestCase(
         self.assertEqual(Interface.objects.filter(device=device).count(), 5)
 
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
+    def test_module_bulk_replication(self):
+        self.add_permissions('dcim.add_module')
+
+        # Add 5 InterfaceTemplates to a ModuleType
+        module_type = ModuleType.objects.first()
+        interface_templates = [
+            InterfaceTemplate(module_type=module_type, name=f'Interface {i}')
+            for i in range(1, 6)
+        ]
+        InterfaceTemplate.objects.bulk_create(interface_templates)
+
+        # Create a module *without* replicating components
+        device = Device.objects.get(name='Device 2')
+        module_bay = ModuleBay.objects.get(device=device, name='Module Bay 4')
+        csv_data = [
+            "device,module_bay,module_type,status,replicate_components",
+            f"{device.name},{module_bay.name},{module_type.model},active,false"
+        ]
+        request = {
+            'path': self._get_url('import'),
+            'data': {
+                'data': '\n'.join(csv_data),
+                'format': ImportFormatChoices.CSV,
+            }
+        }
+
+        initial_count = Module.objects.count()
+        self.assertHttpStatus(self.client.post(**request), 200)
+        self.assertEqual(Module.objects.count(), initial_count + len(csv_data) - 1)
+        self.assertEqual(Interface.objects.filter(device=device).count(), 0)
+
+        # Create a second module (in the next bay) with replicated components
+        module_bay = ModuleBay.objects.get(device=device, name='Module Bay 5')
+        csv_data[1] = f"{device.name},{module_bay.name},{module_type.model},active,true"
+        request = {
+            'path': self._get_url('import'),
+            'data': {
+                'data': '\n'.join(csv_data),
+                'format': ImportFormatChoices.CSV,
+            }
+        }
+
+        initial_count = Module.objects.count()
+        self.assertHttpStatus(self.client.post(**request), 200)
+        self.assertEqual(Module.objects.count(), initial_count + len(csv_data) - 1)
+        self.assertEqual(Interface.objects.filter(device=device).count(), 5)
+
+    @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_module_component_adoption(self):
         self.add_permissions('dcim.add_module')
 
@@ -1892,7 +2020,6 @@ class ModuleTestCase(
         self.assertIsNone(interface.module)
 
         # Create a module with adopted components
-        form_data['module_bay'] = ModuleBay.objects.filter(device=device).first()
         form_data['module_type'] = module_type
         form_data['replicate_components'] = False
         form_data['adopt_components'] = True
@@ -1909,19 +2036,65 @@ class ModuleTestCase(
         # Check that the Interface now has a module
         self.assertIsNotNone(interface.module)
 
+    @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
+    def test_module_bulk_adoption(self):
+        self.add_permissions('dcim.add_module')
+
+        interface_name = "Interface-1"
+
+        # Add an interface to the ModuleType
+        module_type = ModuleType.objects.first()
+        InterfaceTemplate(module_type=module_type, name=interface_name).save()
+
+        form_data = self.form_data.copy()
+        device = Device.objects.get(pk=form_data['device'])
+
+        # Create an interface to be adopted
+        interface = Interface(device=device, name=interface_name, type=InterfaceTypeChoices.TYPE_10GE_FIXED)
+        interface.save()
+
+        # Ensure that interface is created with no module
+        self.assertIsNone(interface.module)
+
+        # Create a module with adopted components
+        module_bay = ModuleBay.objects.get(device=device, name='Module Bay 4')
+        csv_data = [
+            "device,module_bay,module_type,status,replicate_components,adopt_components",
+            f"{device.name},{module_bay.name},{module_type.model},active,false,true"
+        ]
+        request = {
+            'path': self._get_url('import'),
+            'data': {
+                'data': '\n'.join(csv_data),
+                'format': ImportFormatChoices.CSV,
+            }
+        }
+
+        initial_count = self._get_queryset().count()
+        self.assertHttpStatus(self.client.post(**request), 200)
+        self.assertEqual(self._get_queryset().count(), initial_count + len(csv_data) - 1)
+
+        # Re-retrieve interface to get new module id
+        interface.refresh_from_db()
+
+        # Check that the Interface now has a module
+        self.assertIsNotNone(interface.module)
+
 
 class ConsolePortTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = ConsolePort
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         device = create_test_device('Device 1')
 
-        ConsolePort.objects.bulk_create([
+        console_ports = (
             ConsolePort(device=device, name='Console Port 1'),
             ConsolePort(device=device, name='Console Port 2'),
             ConsolePort(device=device, name='Console Port 3'),
-        ])
+        )
+        ConsolePort.objects.bulk_create(console_ports)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -1935,9 +2108,9 @@ class ConsolePortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Console Port [4-6]',
+            'name': 'Console Port [4-6]',
             # Test that a label can be applied to each generated console ports
-            'label_pattern': 'Serial[3-5]',
+            'label': 'Serial[3-5]',
             'type': ConsolePortTypeChoices.TYPE_RJ45,
             'description': 'A console port',
             'tags': sorted([t.pk for t in tags]),
@@ -1955,6 +2128,13 @@ class ConsolePortTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Console Port 6",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{console_ports[0].pk},Console Port 7,New description7",
+            f"{console_ports[1].pk},Console Port 8,New description8",
+            f"{console_ports[2].pk},Console Port 9,New description9",
+        )
+
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_trace(self):
         consoleport = ConsolePort.objects.first()
@@ -1970,16 +2150,18 @@ class ConsolePortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
 class ConsoleServerPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = ConsoleServerPort
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         device = create_test_device('Device 1')
 
-        ConsoleServerPort.objects.bulk_create([
+        console_server_ports = (
             ConsoleServerPort(device=device, name='Console Server Port 1'),
             ConsoleServerPort(device=device, name='Console Server Port 2'),
             ConsoleServerPort(device=device, name='Console Server Port 3'),
-        ])
+        )
+        ConsoleServerPort.objects.bulk_create(console_server_ports)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -1993,7 +2175,7 @@ class ConsoleServerPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Console Server Port [4-6]',
+            'name': 'Console Server Port [4-6]',
             'type': ConsolePortTypeChoices.TYPE_RJ45,
             'description': 'A console server port',
             'tags': [t.pk for t in tags],
@@ -2011,6 +2193,13 @@ class ConsoleServerPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Console Server Port 6",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{console_server_ports[0].pk},Console Server Port 7,New description 7",
+            f"{console_server_ports[1].pk},Console Server Port 8,New description 8",
+            f"{console_server_ports[2].pk},Console Server Port 9,New description 9",
+        )
+
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_trace(self):
         consoleserverport = ConsoleServerPort.objects.first()
@@ -2026,16 +2215,18 @@ class ConsoleServerPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
 class PowerPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = PowerPort
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         device = create_test_device('Device 1')
 
-        PowerPort.objects.bulk_create([
+        power_ports = (
             PowerPort(device=device, name='Power Port 1'),
             PowerPort(device=device, name='Power Port 2'),
             PowerPort(device=device, name='Power Port 3'),
-        ])
+        )
+        PowerPort.objects.bulk_create(power_ports)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2051,7 +2242,7 @@ class PowerPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Power Port [4-6]]',
+            'name': 'Power Port [4-6]]',
             'type': PowerPortTypeChoices.TYPE_IEC_C14,
             'maximum_draw': 100,
             'allocated_draw': 50,
@@ -2073,6 +2264,13 @@ class PowerPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Power Port 6",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{power_ports[0].pk},Power Port 7,New description7",
+            f"{power_ports[1].pk},Power Port 8,New description8",
+            f"{power_ports[2].pk},Power Port 9,New description9",
+        )
+
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_trace(self):
         powerport = PowerPort.objects.first()
@@ -2088,6 +2286,7 @@ class PowerPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
 class PowerOutletTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = PowerOutlet
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
@@ -2099,11 +2298,12 @@ class PowerOutletTestCase(ViewTestCases.DeviceComponentViewTestCase):
         )
         PowerPort.objects.bulk_create(powerports)
 
-        PowerOutlet.objects.bulk_create([
+        power_outlets = (
             PowerOutlet(device=device, name='Power Outlet 1', power_port=powerports[0]),
             PowerOutlet(device=device, name='Power Outlet 2', power_port=powerports[0]),
             PowerOutlet(device=device, name='Power Outlet 3', power_port=powerports[0]),
-        ])
+        )
+        PowerOutlet.objects.bulk_create(power_outlets)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2119,7 +2319,7 @@ class PowerOutletTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Power Outlet [4-6]',
+            'name': 'Power Outlet [4-6]',
             'type': PowerOutletTypeChoices.TYPE_IEC_C13,
             'power_port': powerports[1].pk,
             'feed_leg': PowerOutletFeedLegChoices.FEED_LEG_B,
@@ -2141,6 +2341,13 @@ class PowerOutletTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Power Outlet 6",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{power_outlets[0].pk},Power Outlet 7,New description7",
+            f"{power_outlets[1].pk},Power Outlet 8,New description8",
+            f"{power_outlets[2].pk},Power Outlet 9,New description9",
+        )
+
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_trace(self):
         poweroutlet = PowerOutlet.objects.first()
@@ -2153,6 +2360,7 @@ class PowerOutletTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
 class InterfaceTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = Interface
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
@@ -2217,7 +2425,7 @@ class InterfaceTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Interface [4-6]',
+            'name': 'Interface [4-6]',
             'type': InterfaceTypeChoices.TYPE_1GE_GBIC,
             'enabled': False,
             'bridge': interfaces[4].pk,
@@ -2266,6 +2474,13 @@ class InterfaceTestCase(ViewTestCases.DeviceComponentViewTestCase):
             f"Device 1,Interface 6,1000base-t,{vrfs[0].pk},pse,type1-ieee802.3af",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{interfaces[0].pk},Interface 7,New description7",
+            f"{interfaces[1].pk},Interface 8,New description8",
+            f"{interfaces[2].pk},Interface 9,New description9",
+        )
+
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_trace(self):
         interface1, interface2 = Interface.objects.all()[:2]
@@ -2277,6 +2492,7 @@ class InterfaceTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
 class FrontPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = FrontPort
+    validation_excluded_fields = ('name', 'label', 'rear_port')
 
     @classmethod
     def setUpTestData(cls):
@@ -2292,11 +2508,12 @@ class FrontPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
         )
         RearPort.objects.bulk_create(rearports)
 
-        FrontPort.objects.bulk_create([
+        front_ports = (
             FrontPort(device=device, name='Front Port 1', rear_port=rearports[0]),
             FrontPort(device=device, name='Front Port 2', rear_port=rearports[1]),
             FrontPort(device=device, name='Front Port 3', rear_port=rearports[2]),
-        ])
+        )
+        FrontPort.objects.bulk_create(front_ports)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2312,11 +2529,9 @@ class FrontPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Front Port [4-6]',
+            'name': 'Front Port [4-6]',
             'type': PortTypeChoices.TYPE_8P8C,
-            'rear_port_set': [
-                '{}:1'.format(rp.pk) for rp in rearports[3:6]
-            ],
+            'rear_port': [f'{rp.pk}:1' for rp in rearports[3:6]],
             'description': 'New description',
             'tags': [t.pk for t in tags],
         }
@@ -2331,6 +2546,13 @@ class FrontPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Front Port 4,8p8c,Rear Port 4,1",
             "Device 1,Front Port 5,8p8c,Rear Port 5,1",
             "Device 1,Front Port 6,8p8c,Rear Port 6,1",
+        )
+
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{front_ports[0].pk},Front Port 7,New description7",
+            f"{front_ports[1].pk},Front Port 8,New description8",
+            f"{front_ports[2].pk},Front Port 9,New description9",
         )
 
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
@@ -2348,16 +2570,18 @@ class FrontPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
 class RearPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = RearPort
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         device = create_test_device('Device 1')
 
-        RearPort.objects.bulk_create([
+        rear_ports = (
             RearPort(device=device, name='Rear Port 1'),
             RearPort(device=device, name='Rear Port 2'),
             RearPort(device=device, name='Rear Port 3'),
-        ])
+        )
+        RearPort.objects.bulk_create(rear_ports)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2372,7 +2596,7 @@ class RearPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Rear Port [4-6]',
+            'name': 'Rear Port [4-6]',
             'type': PortTypeChoices.TYPE_8P8C,
             'positions': 3,
             'description': 'A rear port',
@@ -2391,6 +2615,13 @@ class RearPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Rear Port 6,8p8c,1",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{rear_ports[0].pk},Rear Port 7,New description7",
+            f"{rear_ports[1].pk},Rear Port 8,New description8",
+            f"{rear_ports[2].pk},Rear Port 9,New description9",
+        )
+
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_trace(self):
         rearport = RearPort.objects.first()
@@ -2406,16 +2637,18 @@ class RearPortTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
 class ModuleBayTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = ModuleBay
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
         device = create_test_device('Device 1')
 
-        ModuleBay.objects.bulk_create([
+        module_bays = (
             ModuleBay(device=device, name='Module Bay 1'),
             ModuleBay(device=device, name='Module Bay 2'),
             ModuleBay(device=device, name='Module Bay 3'),
-        ])
+        )
+        ModuleBay.objects.bulk_create(module_bays)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2428,7 +2661,7 @@ class ModuleBayTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Module Bay [4-6]',
+            'name': 'Module Bay [4-6]',
             'description': 'A module bay',
             'tags': [t.pk for t in tags],
         }
@@ -2444,9 +2677,17 @@ class ModuleBayTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Module Bay 6",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{module_bays[0].pk},Module Bay 7,New description7",
+            f"{module_bays[1].pk},Module Bay 8,New description8",
+            f"{module_bays[2].pk},Module Bay 9,New description9",
+        )
+
 
 class DeviceBayTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = DeviceBay
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
@@ -2455,11 +2696,12 @@ class DeviceBayTestCase(ViewTestCases.DeviceComponentViewTestCase):
         # Update the DeviceType subdevice role to allow adding DeviceBays
         DeviceType.objects.update(subdevice_role=SubdeviceRoleChoices.ROLE_PARENT)
 
-        DeviceBay.objects.bulk_create([
+        device_bays = (
             DeviceBay(device=device, name='Device Bay 1'),
             DeviceBay(device=device, name='Device Bay 2'),
             DeviceBay(device=device, name='Device Bay 3'),
-        ])
+        )
+        DeviceBay.objects.bulk_create(device_bays)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2472,7 +2714,7 @@ class DeviceBayTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Device Bay [4-6]',
+            'name': 'Device Bay [4-6]',
             'description': 'A device bay',
             'tags': [t.pk for t in tags],
         }
@@ -2488,9 +2730,17 @@ class DeviceBayTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Device Bay 6",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{device_bays[0].pk},Device Bay 7,New description7",
+            f"{device_bays[1].pk},Device Bay 8,New description8",
+            f"{device_bays[2].pk},Device Bay 9,New description9",
+        )
+
 
 class InventoryItemTestCase(ViewTestCases.DeviceComponentViewTestCase):
     model = InventoryItem
+    validation_excluded_fields = ('name', 'label')
 
     @classmethod
     def setUpTestData(cls):
@@ -2503,9 +2753,9 @@ class InventoryItemTestCase(ViewTestCases.DeviceComponentViewTestCase):
         )
         InventoryItemRole.objects.bulk_create(roles)
 
-        InventoryItem.objects.create(device=device, name='Inventory Item 1', role=roles[0], manufacturer=manufacturer)
-        InventoryItem.objects.create(device=device, name='Inventory Item 2', role=roles[0], manufacturer=manufacturer)
-        InventoryItem.objects.create(device=device, name='Inventory Item 3', role=roles[0], manufacturer=manufacturer)
+        inventory_item1 = InventoryItem.objects.create(device=device, name='Inventory Item 1', role=roles[0], manufacturer=manufacturer)
+        inventory_item2 = InventoryItem.objects.create(device=device, name='Inventory Item 2', role=roles[0], manufacturer=manufacturer)
+        inventory_item3 = InventoryItem.objects.create(device=device, name='Inventory Item 3', role=roles[0], manufacturer=manufacturer)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2525,7 +2775,7 @@ class InventoryItemTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.bulk_create_data = {
             'device': device.pk,
-            'name_pattern': 'Inventory Item [4-6]',
+            'name': 'Inventory Item [4-6]',
             'role': roles[1].pk,
             'manufacturer': manufacturer.pk,
             'parent': None,
@@ -2549,6 +2799,13 @@ class InventoryItemTestCase(ViewTestCases.DeviceComponentViewTestCase):
             "Device 1,Inventory Item 6,Inventory Item 3",
         )
 
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{inventory_item1.pk},Inventory Item 7,New description7",
+            f"{inventory_item2.pk},Inventory Item 8,New description8",
+            f"{inventory_item3.pk},Inventory Item 9,New description9",
+        )
+
 
 class InventoryItemRoleTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
     model = InventoryItemRole
@@ -2556,11 +2813,12 @@ class InventoryItemRoleTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
     @classmethod
     def setUpTestData(cls):
 
-        InventoryItemRole.objects.bulk_create([
+        inventory_item_roles = (
             InventoryItemRole(name='Inventory Item Role 1', slug='inventory-item-role-1'),
             InventoryItemRole(name='Inventory Item Role 2', slug='inventory-item-role-2'),
             InventoryItemRole(name='Inventory Item Role 3', slug='inventory-item-role-3'),
-        ])
+        )
+        InventoryItemRole.objects.bulk_create(inventory_item_roles)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2577,6 +2835,13 @@ class InventoryItemRoleTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
             "Inventory Item Role 4,inventory-item-role-4,ff0000",
             "Inventory Item Role 5,inventory-item-role-5,00ff00",
             "Inventory Item Role 6,inventory-item-role-6,0000ff",
+        )
+
+        cls.csv_update_data = (
+            "id,name,description",
+            f"{inventory_item_roles[0].pk},Inventory Item Role 7,New description7",
+            f"{inventory_item_roles[1].pk},Inventory Item Role 8,New description8",
+            f"{inventory_item_roles[2].pk},Inventory Item Role 9,New description9",
         )
 
         cls.bulk_edit_data = {
@@ -2631,9 +2896,12 @@ class CableTestCase(
         )
         Interface.objects.bulk_create(interfaces)
 
-        Cable(a_terminations=[interfaces[0]], b_terminations=[interfaces[3]], type=CableTypeChoices.TYPE_CAT6).save()
-        Cable(a_terminations=[interfaces[1]], b_terminations=[interfaces[4]], type=CableTypeChoices.TYPE_CAT6).save()
-        Cable(a_terminations=[interfaces[2]], b_terminations=[interfaces[5]], type=CableTypeChoices.TYPE_CAT6).save()
+        cable1 = Cable(a_terminations=[interfaces[0]], b_terminations=[interfaces[3]], type=CableTypeChoices.TYPE_CAT6)
+        cable1.save()
+        cable2 = Cable(a_terminations=[interfaces[1]], b_terminations=[interfaces[4]], type=CableTypeChoices.TYPE_CAT6)
+        cable2.save()
+        cable3 = Cable(a_terminations=[interfaces[2]], b_terminations=[interfaces[5]], type=CableTypeChoices.TYPE_CAT6)
+        cable3.save()
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2657,6 +2925,13 @@ class CableTestCase(
             "Device 3,dcim.interface,Interface 1,Device 4,dcim.interface,Interface 1",
             "Device 3,dcim.interface,Interface 2,Device 4,dcim.interface,Interface 2",
             "Device 3,dcim.interface,Interface 3,Device 4,dcim.interface,Interface 3",
+        )
+
+        cls.csv_update_data = (
+            "id,label,color",
+            f"{cable1.pk},New label7,00ff00",
+            f"{cable2.pk},New label8,00ff00",
+            f"{cable3.pk},New label9,00ff00",
         )
 
         cls.bulk_edit_data = {
@@ -2742,6 +3017,13 @@ class VirtualChassisTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             "VC6,Domain 6,Device 12",
         )
 
+        cls.csv_update_data = (
+            "id,name,domain",
+            f"{vc1.pk},VC7,Domain 7",
+            f"{vc2.pk},VC8,Domain 8",
+            f"{vc3.pk},VC9,Domain 9",
+        )
+
         cls.bulk_edit_data = {
             'domain': 'domain-x',
         }
@@ -2766,11 +3048,12 @@ class PowerPanelTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         for location in locations:
             location.save()
 
-        PowerPanel.objects.bulk_create((
+        power_panels = (
             PowerPanel(site=sites[0], location=locations[0], name='Power Panel 1'),
             PowerPanel(site=sites[0], location=locations[0], name='Power Panel 2'),
             PowerPanel(site=sites[0], location=locations[0], name='Power Panel 3'),
-        ))
+        )
+        PowerPanel.objects.bulk_create(power_panels)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2786,6 +3069,13 @@ class PowerPanelTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             "Site 1,Location 1,Power Panel 4",
             "Site 1,Location 1,Power Panel 5",
             "Site 1,Location 1,Power Panel 6",
+        )
+
+        cls.csv_update_data = (
+            "id,name",
+            f"{power_panels[0].pk},Power Panel 7",
+            f"{power_panels[1].pk},Power Panel 8",
+            f"{power_panels[2].pk},Power Panel 9",
         )
 
         cls.bulk_edit_data = {
@@ -2814,11 +3104,12 @@ class PowerFeedTestCase(ViewTestCases.PrimaryObjectViewTestCase):
         )
         Rack.objects.bulk_create(racks)
 
-        PowerFeed.objects.bulk_create((
+        power_feeds = (
             PowerFeed(name='Power Feed 1', power_panel=powerpanels[0], rack=racks[0]),
             PowerFeed(name='Power Feed 2', power_panel=powerpanels[0], rack=racks[0]),
             PowerFeed(name='Power Feed 3', power_panel=powerpanels[0], rack=racks[0]),
-        ))
+        )
+        PowerFeed.objects.bulk_create(power_feeds)
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
 
@@ -2842,6 +3133,13 @@ class PowerFeedTestCase(ViewTestCases.PrimaryObjectViewTestCase):
             "Site 1,Power Panel 1,Power Feed 4,active,primary,ac,single-phase,120,20,80",
             "Site 1,Power Panel 1,Power Feed 5,active,primary,ac,single-phase,120,20,80",
             "Site 1,Power Panel 1,Power Feed 6,active,primary,ac,single-phase,120,20,80",
+        )
+
+        cls.csv_update_data = (
+            "id,name,status",
+            f"{power_feeds[0].pk},Power Feed 7,{PowerFeedStatusChoices.STATUS_PLANNED}",
+            f"{power_feeds[1].pk},Power Feed 8,{PowerFeedStatusChoices.STATUS_PLANNED}",
+            f"{power_feeds[2].pk},Power Feed 9,{PowerFeedStatusChoices.STATUS_PLANNED}",
         )
 
         cls.bulk_edit_data = {
@@ -2879,3 +3177,48 @@ class PowerFeedTestCase(ViewTestCases.PrimaryObjectViewTestCase):
 
         response = self.client.get(reverse('dcim:powerfeed_trace', kwargs={'pk': powerfeed.pk}))
         self.assertHttpStatus(response, 200)
+
+
+class VirtualDeviceContextTestCase(ViewTestCases.PrimaryObjectViewTestCase):
+    model = VirtualDeviceContext
+
+    @classmethod
+    def setUpTestData(cls):
+        devices = [create_test_device(name='Device 1')]
+
+        vdcs = (
+            VirtualDeviceContext(name='VDC 1', identifier=1, device=devices[0], status='active'),
+            VirtualDeviceContext(name='VDC 2', identifier=2, device=devices[0], status='active'),
+            VirtualDeviceContext(name='VDC 3', identifier=3, device=devices[0], status='active'),
+        )
+        VirtualDeviceContext.objects.bulk_create(vdcs)
+
+        tags = create_tags('Alpha', 'Bravo', 'Charlie')
+
+        cls.form_data = {
+            'device': devices[0].pk,
+            'status': 'active',
+            'name': 'VDC 4',
+            'identifier': 4,
+            'primary_ip4': None,
+            'primary_ip6': None,
+            'tags': [t.pk for t in tags],
+        }
+
+        cls.csv_data = (
+            "device,status,name,identifier",
+            "Device 1,active,VDC 5,5",
+            "Device 1,active,VDC 6,6",
+            "Device 1,active,VDC 7,7",
+        )
+
+        cls.csv_update_data = (
+            "id,status",
+            f"{vdcs[0].pk},{VirtualDeviceContextStatusChoices.STATUS_PLANNED}",
+            f"{vdcs[1].pk},{VirtualDeviceContextStatusChoices.STATUS_PLANNED}",
+            f"{vdcs[2].pk},{VirtualDeviceContextStatusChoices.STATUS_PLANNED}",
+        )
+
+        cls.bulk_edit_data = {
+            'status': VirtualDeviceContextStatusChoices.STATUS_OFFLINE,
+        }

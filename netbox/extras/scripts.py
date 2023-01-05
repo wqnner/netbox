@@ -4,8 +4,9 @@ import logging
 import os
 import pkgutil
 import sys
-import traceback
 import threading
+import traceback
+from datetime import timedelta
 
 import yaml
 from django import forms
@@ -16,6 +17,7 @@ from django.utils.functional import classproperty
 
 from extras.api.serializers import ScriptOutputSerializer
 from extras.choices import JobResultStatusChoices, LogLevelChoices
+from extras.models import JobResult
 from extras.signals import clear_webhooks
 from ipam.formfields import IPAddressFormField, IPNetworkFormField
 from ipam.validators import MaxPrefixLengthValidator, MinPrefixLengthValidator, prefix_validator
@@ -299,6 +301,10 @@ class BaseScript:
     def module(cls):
         return cls.__module__
 
+    @classmethod
+    def root_module(cls):
+        return cls.__module__.split(".")[0]
+
     @classproperty
     def job_timeout(self):
         return getattr(self.Meta, 'job_timeout', None)
@@ -429,15 +435,13 @@ def is_variable(obj):
 def run_script(data, request, commit=True, *args, **kwargs):
     """
     A wrapper for calling Script.run(). This performs error handling and provides a hook for committing changes. It
-    exists outside of the Script class to ensure it cannot be overridden by a script author.
+    exists outside the Script class to ensure it cannot be overridden by a script author.
     """
     job_result = kwargs.pop('job_result')
+    job_result.start()
+
     module, script_name = job_result.name.split('.', 1)
-
     script = get_script(module, script_name)()
-
-    job_result.status = JobResultStatusChoices.STATUS_RUNNING
-    job_result.save()
 
     logger = logging.getLogger(f"netbox.scripts.{module}.{script_name}")
     logger.info(f"Running script (commit={commit})")
@@ -489,6 +493,22 @@ def run_script(data, request, commit=True, *args, **kwargs):
     else:
         _run_script()
 
+    # Schedule the next job if an interval has been set
+    if job_result.interval:
+        new_scheduled_time = job_result.scheduled + timedelta(minutes=job_result.interval)
+        JobResult.enqueue_job(
+            run_script,
+            name=job_result.name,
+            obj_type=job_result.obj_type,
+            user=job_result.user,
+            schedule_at=new_scheduled_time,
+            interval=job_result.interval,
+            job_timeout=script.job_timeout,
+            data=data,
+            request=request,
+            commit=commit
+        )
+
 
 def get_scripts(use_names=False):
     """
@@ -514,7 +534,9 @@ def get_scripts(use_names=False):
         ordered_scripts = [cls for cls in script_order if is_script(cls)]
         unordered_scripts = [cls for _, cls in inspect.getmembers(module, is_script) if cls not in script_order]
         for cls in [*ordered_scripts, *unordered_scripts]:
-            module_scripts[cls.__name__] = cls
+            # For scripts in submodules use the full import path w/o the root module as the name
+            script_name = cls.full_name.split(".", maxsplit=1)[1]
+            module_scripts[script_name] = cls
         if module_scripts:
             scripts[module_name] = module_scripts
 

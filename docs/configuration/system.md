@@ -12,6 +12,17 @@ BASE_PATH = 'netbox/'
 
 ---
 
+## DEFAULT_LANGUAGE
+
+Default: `en-us` (US English)
+
+Defines the default preferred language/locale for requests that do not specify one. This is used to alter e.g. the display of dates and numbers to fit the user's locale. See [this list](http://www.i18nguy.com/unicode/language-identifiers.html) of standard language codes. (This parameter maps to Django's [`LANGUAGE_CODE`](https://docs.djangoproject.com/en/stable/ref/settings/#language-code) internal setting.)
+
+!!! note
+    Altering this parameter will *not* change the language used in NetBox. We hope to provide translation support in a future NetBox release.
+
+---
+
 ## DOCS_ROOT
 
 Default: `$INSTALL_ROOT/docs/`
@@ -54,11 +65,19 @@ Email is sent from NetBox only for critical events or if configured for [logging
 
 ---
 
+## ENABLE_LOCALIZATION
+
+Default: False
+
+Determines if localization features are enabled or not. This should only be enabled for development or testing purposes as netbox is not yet fully localized. Turning this on will localize numeric and date formats (overriding what is set for DATE_FORMAT) based on the browser locale as well as translate certain strings from third party modules.
+
+---
+
 ## HTTP_PROXIES
 
 Default: None
 
-A dictionary of HTTP proxies to use for outbound requests originating from NetBox (e.g. when sending webhook requests). Proxies should be specified by schema (HTTP and HTTPS) as per the [Python requests library documentation](https://2.python-requests.org/en/master/user/advanced/). For example:
+A dictionary of HTTP proxies to use for outbound requests originating from NetBox (e.g. when sending webhook requests). Proxies should be specified by schema (HTTP and HTTPS) as per the [Python requests library documentation](https://requests.readthedocs.io/en/latest/user/advanced/#proxies). For example:
 
 ```python
 HTTP_PROXIES = {
@@ -154,6 +173,14 @@ The file path to the location where [custom reports](../customization/reports.md
 Default: `$INSTALL_ROOT/netbox/scripts/`
 
 The file path to the location where [custom scripts](../customization/custom-scripts.md) will be kept. By default, this is the `netbox/scripts/` directory within the base NetBox installation path.
+
+---
+
+## SEARCH_BACKEND
+
+Default: `'netbox.search.backends.CachedValueSearchBackend'`
+
+The dotted path to the desired search backend class. `CachedValueSearchBackend` is currently the only search backend provided in NetBox, however this setting can be used to enable a custom backend. 
 
 ---
 

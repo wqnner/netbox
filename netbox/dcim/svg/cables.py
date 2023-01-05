@@ -35,7 +35,7 @@ class Node(Hyperlink):
     """
 
     def __init__(self, position, width, url, color, labels, radius=10, **extra):
-        super(Node, self).__init__(href=url, target='_blank', **extra)
+        super(Node, self).__init__(href=url, target='_parent', **extra)
 
         x, y = position
 
@@ -166,7 +166,7 @@ class CableTraceSVG:
         """
         if hasattr(instance, 'parent_object'):
             # Termination
-            return 'f0f0f0'
+            return getattr(instance, 'color', 'f0f0f0') or 'f0f0f0'
         if hasattr(instance, 'device_role'):
             # Device
             return instance.device_role.color

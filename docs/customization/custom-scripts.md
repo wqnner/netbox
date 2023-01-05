@@ -129,6 +129,19 @@ The Script object provides a set of convenient functions for recording messages 
 
 Log messages are returned to the user upon execution of the script. Markdown rendering is supported for log messages.
 
+## Change Logging
+
+To generate the correct change log data when editing an existing object, a snapshot of the object must be taken before making any changes to the object.
+
+```python
+if obj.pk and hasattr(obj, 'snapshot'):
+    obj.snapshot()
+
+obj.property = "New Value"
+obj.full_clean()
+obj.save()
+```
+
 ## Variable Reference
 
 ### Default Options
@@ -254,7 +267,7 @@ An IPv4 or IPv6 network with a mask. Returns a `netaddr.IPNetwork` object. Two a
 
 ### Via the Web UI
 
-Custom scripts can be run via the web UI by navigating to the script, completing any required form data, and clicking the "run script" button.
+Custom scripts can be run via the web UI by navigating to the script, completing any required form data, and clicking the "run script" button. It is possible to schedule a script to be executed at specified time in the future. A scheduled script can be canceled by deleting the associated job result object.
 
 ### Via the API
 
@@ -268,6 +281,8 @@ curl -X POST \
 http://netbox/api/extras/scripts/example.MyReport/ \
 --data '{"data": {"foo": "somevalue", "bar": 123}, "commit": true}'
 ```
+
+Optionally `schedule_at` can be passed in the form data with a datetime string to schedule a script at the specified date and time.
 
 ### Via the CLI
 
