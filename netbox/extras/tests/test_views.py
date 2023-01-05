@@ -107,7 +107,7 @@ class CustomLinkTestCase(ViewTestCases.BaseObjectViewTestCase, ViewTestCases.Cre
         }
 
 
-class SavedFilterTestCase(ViewTestCases.PrimaryObjectViewTestCase):
+class SavedFilterTestCase(ViewTestCases.BaseObjectViewTestCase, ViewTestCases.CreateObjectViewTestCase):
     model = SavedFilter
 
     @classmethod
