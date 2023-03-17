@@ -100,13 +100,16 @@ class L2VPNTermination(NetBoxModel):
 
     class Meta:
         ordering = ('l2vpn',)
-        verbose_name = 'L2VPN termination'
         constraints = (
             models.UniqueConstraint(
                 fields=('assigned_object_type', 'assigned_object_id'),
                 name='ipam_l2vpntermination_assigned_object'
             ),
         )
+        indexes = (
+            models.Index(fields=('assigned_object_type', 'assigned_object_id')),
+        )
+        verbose_name = 'L2VPN termination'
 
     def __str__(self):
         if self.pk is not None:

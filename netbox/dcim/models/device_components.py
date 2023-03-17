@@ -1122,6 +1122,9 @@ class InventoryItem(MPTTModel, ComponentModel):
                 name='%(app_label)s_%(class)s_unique_device_parent_name'
             ),
         )
+        indexes = (
+            models.Index(fields=('component_type', 'component_id')),
+        )
 
     def get_absolute_url(self):
         return reverse('dcim:inventoryitem', kwargs={'pk': self.pk})

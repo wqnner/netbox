@@ -75,6 +75,9 @@ class VLANGroup(OrganizationalModel):
                 name='%(app_label)s_%(class)s_unique_scope_slug'
             ),
         )
+        indexes = (
+            models.Index(fields=('scope_type', 'scope_id')),
+        )
         verbose_name = 'VLAN group'
         verbose_name_plural = 'VLAN groups'
 

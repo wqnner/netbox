@@ -84,6 +84,9 @@ class StagedChange(ChangeLoggedModel):
 
     class Meta:
         ordering = ('pk',)
+        indexes = (
+            models.Index(fields=('object_type', 'object_id')),
+        )
 
     def __str__(self):
         action = self.get_action_display()

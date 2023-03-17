@@ -662,6 +662,9 @@ class InventoryItemTemplate(MPTTModel, ComponentTemplateModel):
                 name='%(app_label)s_%(class)s_unique_device_type_parent_name'
             ),
         )
+        indexes = (
+            models.Index(fields=('component_type', 'component_id')),
+        )
 
     def instantiate(self, **kwargs):
         parent = InventoryItem.objects.get(name=self.parent.name, **kwargs) if self.parent else None

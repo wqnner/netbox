@@ -54,3 +54,4 @@ A new ASN range model has been introduced to facilitate the provisioning of new 
 * [#11694](https://github.com/netbox-community/netbox/issues/11694) - Remove obsolete `SmallTextarea` form widget
 * [#11737](https://github.com/netbox-community/netbox/issues/11737) - `ChangeLoggedModel` now inherits `WebhooksMixin`
 * [#11765](https://github.com/netbox-community/netbox/issues/11765) - Retire the `StaticSelect` and `StaticSelectMultiple` form widgets
+* [#11790](https://github.com/netbox-community/netbox/issues/11790) - Add PostgreSQL indexes for all generic foreign key relationships to improve performance

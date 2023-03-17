@@ -128,6 +128,9 @@ class ContactAssignment(ChangeLoggedModel):
                 name='%(app_label)s_%(class)s_unique_object_contact_role'
             ),
         )
+        indexes = (
+            models.Index(fields=('content_type', 'object_id')),
+        )
 
     def __str__(self):
         if self.priority:

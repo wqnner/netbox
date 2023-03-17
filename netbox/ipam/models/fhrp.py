@@ -103,6 +103,9 @@ class FHRPGroupAssignment(ChangeLoggedModel):
                 name='%(app_label)s_%(class)s_unique_interface_group'
             ),
         )
+        indexes = (
+            models.Index(fields=('interface_type', 'interface_id')),
+        )
         verbose_name = 'FHRP group assignment'
 
     def __str__(self):

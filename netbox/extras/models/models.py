@@ -489,6 +489,9 @@ class ImageAttachment(ChangeLoggedModel):
 
     class Meta:
         ordering = ('name', 'pk')  # name may be non-unique
+        indexes = (
+            models.Index(fields=('content_type', 'object_id')),
+        )
 
     def __str__(self):
         if self.name:
@@ -564,6 +567,9 @@ class JournalEntry(CustomFieldsMixin, CustomLinksMixin, TagsMixin, ExportTemplat
 
     class Meta:
         ordering = ('-created',)
+        indexes = (
+            models.Index(fields=('assigned_object_type', 'assigned_object_id')),
+        )
         verbose_name_plural = 'journal entries'
 
     def __str__(self):
