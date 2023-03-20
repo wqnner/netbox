@@ -2,6 +2,7 @@ import re
 
 from django import forms
 from django.utils.translation import gettext as _
+
 from .mixins import BootstrapMixin
 
 __all__ = (
