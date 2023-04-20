@@ -312,7 +312,7 @@ class ViewTestCases:
             # Try POST with model-level permission
             request = {
                 'path': self._get_url('edit', instance),
-                'data': post_data(self.form_data),
+                'data': post_data(form_data),
             }
             self.assertHttpStatus(self.client.post(**request), 302)
             self.assertInstanceEqual(self._get_queryset().get(pk=instance.pk), self.form_data)
