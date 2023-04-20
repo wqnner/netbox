@@ -6,8 +6,9 @@ from django.db.models import ForeignKey
 from django.test import override_settings
 from django.urls import reverse
 
-from extras.choices import ObjectChangeActionChoices
-from extras.models import ObjectChange
+from extras.choices import ObjectChangeActionChoices, CustomFieldTypeChoices
+from extras.models import ObjectChange, CustomField
+from netbox.models import CustomFieldsMixin
 from users.models import ObjectPermission
 from utilities.choices import ImportFormatChoices
 from .base import ModelTestCase
@@ -17,6 +18,54 @@ __all__ = (
     'ModelViewTestCase',
     'ViewTestCases',
 )
+
+
+def add_custom_field_data(form_data, model):
+    # Check if need to include Custom Field data
+    if issubclass(model, CustomFieldsMixin):
+        # create the custom fields to set
+        custom_fields = (
+            CustomField(type=CustomFieldTypeChoices.TYPE_TEXT, name='text_field', default='foo'),
+            CustomField(type=CustomFieldTypeChoices.TYPE_LONGTEXT, name='longtext_field', default='ABC'),
+            CustomField(type=CustomFieldTypeChoices.TYPE_INTEGER, name='integer_field', default=123),
+            CustomField(type=CustomFieldTypeChoices.TYPE_DECIMAL, name='decimal_field', default=123.45),
+            CustomField(type=CustomFieldTypeChoices.TYPE_BOOLEAN, name='boolean_field', default=False),
+            CustomField(type=CustomFieldTypeChoices.TYPE_DATE, name='date_field', default='2020-01-01'),
+            CustomField(type=CustomFieldTypeChoices.TYPE_URL, name='url_field', default='http://example.com/1'),
+            CustomField(type=CustomFieldTypeChoices.TYPE_JSON, name='json_field', default='{"x": "y"}'),
+            CustomField(
+                type=CustomFieldTypeChoices.TYPE_SELECT,
+                name='select_field',
+                default='Foo',
+                choices=(
+                    'Foo', 'Bar', 'Baz'
+                )
+            ),
+            CustomField(
+                type=CustomFieldTypeChoices.TYPE_MULTISELECT,
+                name='multiselect_field',
+                default=['Foo'],
+                choices=(
+                    'Foo', 'Bar', 'Baz'
+                )
+            ),
+        )
+        for cf in custom_fields:
+            cf.save()
+            cf.content_types.set([ContentType.objects.get_for_model(model)])
+
+        form_data['cf_text_field'] = 'foo123'
+        form_data['cf_longtext_field'] = 'ABC123'
+        form_data['cf_integer_field'] = 456
+        form_data['cf_decimal_field'] = 456.12
+        form_data['cf_boolean_field'] = True
+        form_data['cf_date_field'] = '2022-02-02'
+        form_data['cf_url_field'] = 'http://example2.com/1'
+        form_data['cf_json_field'] = '{"x": "z"}'
+        form_data['cf_select_field'] = 'Bar'
+        form_data['cf_multiselect_field'] = ['Bar']
+
+    return form_data
 
 
 #
@@ -159,10 +208,13 @@ class ViewTestCases:
             # Try GET with model-level permission
             self.assertHttpStatus(self.client.get(self._get_url('add')), 200)
 
+            # add Custom Field data if needed
+            form_data = add_custom_field_data(self.form_data, self.model)
+
             # Try POST with model-level permission
             request = {
                 'path': self._get_url('add'),
-                'data': post_data(self.form_data),
+                'data': post_data(form_data),
             }
             self.assertHttpStatus(self.client.post(**request), 302)
             self.assertEqual(initial_count + 1, self._get_queryset().count())
@@ -253,6 +305,9 @@ class ViewTestCases:
 
             # Try GET with model-level permission
             self.assertHttpStatus(self.client.get(self._get_url('edit', instance)), 200)
+
+            # add Custom Field data if needed
+            form_data = add_custom_field_data(self.form_data, self.model)
 
             # Try POST with model-level permission
             request = {
