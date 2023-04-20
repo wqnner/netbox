@@ -16,6 +16,7 @@ from virtualization.models import VirtualMachine, VMInterface
 from .choices import *
 from .models import *
 
+from rest_framework import serializers
 
 __all__ = (
     'AggregateFilterSet',
@@ -405,6 +406,14 @@ class IPRangeFilterSet(TenancyFilterSet, NetBoxModelFilterSet):
         field_name='start_address',
         lookup_expr='family'
     )
+    start_address = MultiValueCharFilter(
+        method='filter_address',
+        label=_('Address'),
+    )
+    end_address = MultiValueCharFilter(
+        method='filter_address',
+        label=_('Address'),
+    )
     contains = django_filters.CharFilter(
         method='search_contains',
         label=_('Ranges which contain this prefix or IP'),
@@ -441,9 +450,9 @@ class IPRangeFilterSet(TenancyFilterSet, NetBoxModelFilterSet):
     def search(self, queryset, name, value):
         if not value.strip():
             return queryset
-        qs_filter = Q(description__icontains=value)
+        qs_filter = Q(description__icontains=value) | Q(start_address__contains=value) | Q(end_address__contains=value)
         try:
-            ipaddress = str(netaddr.IPNetwork(value.strip()).cidr)
+            ipaddress = str(netaddr.IPNetwork(value.strip()))
             qs_filter |= Q(start_address=ipaddress)
             qs_filter |= Q(end_address=ipaddress)
         except (AddrFormatError, ValueError):
@@ -459,6 +468,12 @@ class IPRangeFilterSet(TenancyFilterSet, NetBoxModelFilterSet):
             ipaddress = netaddr.IPNetwork(value)
             return queryset.filter(start_address__lte=ipaddress, end_address__gte=ipaddress)
         except (AddrFormatError, ValueError):
+            return queryset.none()
+
+    def filter_address(self, queryset, name, value):
+        try:
+            return queryset.filter(**{f'{name}__net_in': value})
+        except ValidationError:
             return queryset.none()
 
 
@@ -585,7 +600,33 @@ class IPAddressFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
                 return queryset.none()
         return queryset.filter(q)
 
+    def parse_inet_addresses(self, value):
+        '''
+        Parse networks or IP addresses and cast to a format
+        acceptable by the Postgres inet type.
+
+        Skips invalid values.
+        '''
+        parsed = []
+        for addr in value:
+            if netaddr.valid_ipv4(addr) or netaddr.valid_ipv6(addr):
+                parsed.append(addr)
+                continue
+            try:
+                network = netaddr.IPNetwork(addr)
+                parsed.append(str(network))
+            except (AddrFormatError, ValueError):
+                continue
+        return parsed
+
     def filter_address(self, queryset, name, value):
+        # Let's first parse the addresses passed
+        # as argument. If they are all invalid,
+        # we return an empty queryset
+        value = self.parse_inet_addresses(value)
+        if (len(value) == 0):
+            return queryset.none()
+
         try:
             return queryset.filter(address__net_in=value)
         except ValidationError:
@@ -852,6 +893,17 @@ class VLANFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
         queryset=VirtualMachine.objects.all(),
         method='get_for_virtualmachine'
     )
+    l2vpn_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='l2vpn_terminations__l2vpn',
+        queryset=L2VPN.objects.all(),
+        label=_('L2VPN (ID)'),
+    )
+    l2vpn = django_filters.ModelMultipleChoiceFilter(
+        field_name='l2vpn_terminations__l2vpn__identifier',
+        queryset=L2VPN.objects.all(),
+        to_field_name='identifier',
+        label=_('L2VPN'),
+    )
 
     class Meta:
         model = VLAN
@@ -912,6 +964,18 @@ class ServiceFilterSet(NetBoxModelFilterSet):
         to_field_name='name',
         label=_('Virtual machine (name)'),
     )
+    ipaddress_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='ipaddresses',
+        queryset=IPAddress.objects.all(),
+        label=_('IP address (ID)'),
+    )
+    ipaddress = django_filters.ModelMultipleChoiceFilter(
+        field_name='ipaddresses__address',
+        queryset=IPAddress.objects.all(),
+        to_field_name='address',
+        label=_('IP address'),
+    )
+
     port = NumericArrayFilter(
         field_name='ports',
         lookup_expr='contains'

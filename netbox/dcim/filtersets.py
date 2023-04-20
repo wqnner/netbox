@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import gettext as _
 
 from extras.filtersets import LocalConfigContextFilterSet
-from ipam.models import ASN, IPAddress, VRF
+from ipam.models import ASN, L2VPN, IPAddress, VRF
 from netbox.filtersets import (
     BaseFilterSet, ChangeLoggedModelFilterSet, OrganizationalModelFilterSet, NetBoxModelFilterSet,
 )
@@ -24,6 +24,7 @@ __all__ = (
     'CableFilterSet',
     'CabledObjectFilterSet',
     'CableTerminationFilterSet',
+    'CommonInterfaceFilterSet',
     'ConsoleConnectionFilterSet',
     'ConsolePortFilterSet',
     'ConsolePortTemplateFilterSet',
@@ -981,7 +982,9 @@ class DeviceFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilter
             Q(serial__icontains=value.strip()) |
             Q(inventoryitems__serial__icontains=value.strip()) |
             Q(asset_tag__icontains=value.strip()) |
-            Q(comments__icontains=value)
+            Q(comments__icontains=value) |
+            Q(primary_ip4__address__startswith=value) |
+            Q(primary_ip6__address__startswith=value)
         ).distinct()
 
     def _has_primary_ip(self, queryset, name, value):
@@ -1319,11 +1322,63 @@ class PowerOutletFilterSet(
         fields = ['id', 'name', 'label', 'feed_leg', 'description', 'cable_end']
 
 
+class CommonInterfaceFilterSet(django_filters.FilterSet):
+    vlan_id = django_filters.CharFilter(
+        method='filter_vlan_id',
+        label=_('Assigned VLAN')
+    )
+    vlan = django_filters.CharFilter(
+        method='filter_vlan',
+        label=_('Assigned VID')
+    )
+    vrf_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='vrf',
+        queryset=VRF.objects.all(),
+        label=_('VRF'),
+    )
+    vrf = django_filters.ModelMultipleChoiceFilter(
+        field_name='vrf__rd',
+        queryset=VRF.objects.all(),
+        to_field_name='rd',
+        label=_('VRF (RD)'),
+    )
+    l2vpn_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='l2vpn_terminations__l2vpn',
+        queryset=L2VPN.objects.all(),
+        label=_('L2VPN (ID)'),
+    )
+    l2vpn = django_filters.ModelMultipleChoiceFilter(
+        field_name='l2vpn_terminations__l2vpn__identifier',
+        queryset=L2VPN.objects.all(),
+        to_field_name='identifier',
+        label=_('L2VPN'),
+    )
+
+    def filter_vlan_id(self, queryset, name, value):
+        value = value.strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(untagged_vlan_id=value) |
+            Q(tagged_vlans=value)
+        )
+
+    def filter_vlan(self, queryset, name, value):
+        value = value.strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(untagged_vlan_id__vid=value) |
+            Q(tagged_vlans__vid=value)
+        )
+
+
 class InterfaceFilterSet(
     ModularDeviceComponentFilterSet,
     NetBoxModelFilterSet,
     CabledObjectFilterSet,
-    PathEndpointFilterSet
+    PathEndpointFilterSet,
+    CommonInterfaceFilterSet
 ):
     # Override device and device_id filters from DeviceComponentFilterSet to match against any peer virtual chassis
     # members
@@ -1368,14 +1423,6 @@ class InterfaceFilterSet(
     poe_type = django_filters.MultipleChoiceFilter(
         choices=InterfacePoETypeChoices
     )
-    vlan_id = django_filters.CharFilter(
-        method='filter_vlan_id',
-        label=_('Assigned VLAN')
-    )
-    vlan = django_filters.CharFilter(
-        method='filter_vlan',
-        label=_('Assigned VID')
-    )
     type = django_filters.MultipleChoiceFilter(
         choices=InterfaceTypeChoices,
         null_value=None
@@ -1385,17 +1432,6 @@ class InterfaceFilterSet(
     )
     rf_channel = django_filters.MultipleChoiceFilter(
         choices=WirelessChannelChoices
-    )
-    vrf_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='vrf',
-        queryset=VRF.objects.all(),
-        label=_('VRF'),
-    )
-    vrf = django_filters.ModelMultipleChoiceFilter(
-        field_name='vrf__rd',
-        queryset=VRF.objects.all(),
-        to_field_name='rd',
-        label=_('VRF (RD)'),
     )
     vdc_id = django_filters.ModelMultipleChoiceFilter(
         field_name='vdcs',
@@ -1442,24 +1478,6 @@ class InterfaceFilterSet(
             return queryset.filter(pk__in=vc_interface_ids)
         except Device.DoesNotExist:
             return queryset.none()
-
-    def filter_vlan_id(self, queryset, name, value):
-        value = value.strip()
-        if not value:
-            return queryset
-        return queryset.filter(
-            Q(untagged_vlan_id=value) |
-            Q(tagged_vlans=value)
-        )
-
-    def filter_vlan(self, queryset, name, value):
-        value = value.strip()
-        if not value:
-            return queryset
-        return queryset.filter(
-            Q(untagged_vlan_id__vid=value) |
-            Q(tagged_vlans__vid=value)
-        )
 
     def filter_kind(self, queryset, name, value):
         value = value.strip().lower()
@@ -1649,12 +1667,14 @@ class CableFilterSet(TenancyFilterSet, NetBoxModelFilterSet):
         field_name='terminations__termination_type'
     )
     termination_a_id = MultiValueNumberFilter(
+        method='filter_by_cable_end_a',
         field_name='terminations__termination_id'
     )
     termination_b_type = ContentTypeFilter(
         field_name='terminations__termination_type'
     )
     termination_b_id = MultiValueNumberFilter(
+        method='filter_by_cable_end_b',
         field_name='terminations__termination_id'
     )
     type = django_filters.MultipleChoiceFilter(
@@ -1712,8 +1732,21 @@ class CableFilterSet(TenancyFilterSet, NetBoxModelFilterSet):
         # Supported objects: device, rack, location, site
         return queryset.filter(**{f'terminations___{name}__in': value}).distinct()
 
+    def filter_by_cable_end(self, queryset, name, value, side):
+        # Filter by termination id and cable_end type
+        return queryset.filter(**{f'{name}__in': value, 'terminations__cable_end': side}).distinct()
+
+    def filter_by_cable_end_a(self, queryset, name, value):
+        # Filter by termination id and cable_end type
+        return self.filter_by_cable_end(queryset, name, value, CableEndChoices.SIDE_A)
+
+    def filter_by_cable_end_b(self, queryset, name, value):
+        # Filter by termination id and cable_end type
+        return self.filter_by_cable_end(queryset, name, value, CableEndChoices.SIDE_B)
+
 
 class CableTerminationFilterSet(BaseFilterSet):
+    termination_type = ContentTypeFilter()
 
     class Meta:
         model = CableTermination

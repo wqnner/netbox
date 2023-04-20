@@ -195,10 +195,15 @@ def parse_csv(reader):
     # `site.slug` header, to indicate the related site is being referenced by its slug.
 
     for header in next(reader):
+        header = header.strip()
         if '.' in header:
             field, to_field = header.split('.', 1)
+            if field in headers:
+                raise forms.ValidationError(f'Duplicate or conflicting column header for "{field}"')
             headers[field] = to_field
         else:
+            if header in headers:
+                raise forms.ValidationError(f'Duplicate or conflicting column header for "{header}"')
             headers[header] = None
 
     # Parse CSV rows into a list of dictionaries mapped from the column headers.

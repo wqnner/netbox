@@ -21,7 +21,9 @@ from utilities.paginator import EnhancedPaginator, get_paginate_count
 from utilities.permissions import get_permission_for_model
 from utilities.utils import count_related
 from utilities.views import GetReturnURLMixin, ObjectPermissionRequiredMixin, ViewTab, register_model_view
+from virtualization.filtersets import VirtualMachineFilterSet
 from virtualization.models import VirtualMachine
+from virtualization.tables import VirtualMachineTable
 from . import filtersets, forms, tables
 from .choices import DeviceFaceChoices
 from .constants import NONCONNECTABLE_IFACE_TYPES
@@ -626,6 +628,7 @@ class RackRoleBulkDeleteView(generic.BulkDeleteView):
     queryset = RackRole.objects.annotate(
         rack_count=count_related(Rack, 'role')
     )
+    filterset = filtersets.RackRoleFilterSet
     table = tables.RackRoleTable
 
 
@@ -640,6 +643,7 @@ class RackListView(generic.ObjectListView):
     filterset = filtersets.RackFilterSet
     filterset_form = forms.RackFilterForm
     table = tables.RackTable
+    template_name = 'dcim/rack_list.html'
 
 
 class RackElevationListView(generic.ObjectListView):
@@ -840,6 +844,7 @@ class RackReservationBulkDeleteView(generic.BulkDeleteView):
 class ManufacturerListView(generic.ObjectListView):
     queryset = Manufacturer.objects.annotate(
         devicetype_count=count_related(DeviceType, 'manufacturer'),
+        moduletype_count=count_related(ModuleType, 'manufacturer'),
         inventoryitem_count=count_related(InventoryItem, 'manufacturer'),
         platform_count=count_related(Platform, 'manufacturer')
     )
@@ -905,6 +910,7 @@ class ManufacturerBulkDeleteView(generic.BulkDeleteView):
     queryset = Manufacturer.objects.annotate(
         devicetype_count=count_related(DeviceType, 'manufacturer')
     )
+    filterset = filtersets.ManufacturerFilterSet
     table = tables.ManufacturerTable
 
 
@@ -1736,6 +1742,42 @@ class DeviceRoleView(generic.ObjectView):
         }
 
 
+@register_model_view(DeviceRole, 'devices', path='devices')
+class DeviceRoleDevicesView(generic.ObjectChildrenView):
+    queryset = DeviceRole.objects.all()
+    child_model = Device
+    table = tables.DeviceTable
+    filterset = filtersets.DeviceFilterSet
+    template_name = 'dcim/devicerole/devices.html'
+    tab = ViewTab(
+        label=_('Devices'),
+        badge=lambda obj: obj.devices.count(),
+        permission='dcim.view_device',
+        weight=400
+    )
+
+    def get_children(self, request, parent):
+        return Device.objects.restrict(request.user, 'view').filter(device_role=parent)
+
+
+@register_model_view(DeviceRole, 'virtual_machines', path='virtual-machines')
+class DeviceRoleVirtualMachinesView(generic.ObjectChildrenView):
+    queryset = DeviceRole.objects.all()
+    child_model = VirtualMachine
+    table = VirtualMachineTable
+    filterset = VirtualMachineFilterSet
+    template_name = 'dcim/devicerole/virtual_machines.html'
+    tab = ViewTab(
+        label=_('Virtual machines'),
+        badge=lambda obj: obj.virtual_machines.count(),
+        permission='virtualization.view_virtualmachine',
+        weight=500
+    )
+
+    def get_children(self, request, parent):
+        return VirtualMachine.objects.restrict(request.user, 'view').filter(role=parent)
+
+
 @register_model_view(DeviceRole, 'edit')
 class DeviceRoleEditView(generic.ObjectEditView):
     queryset = DeviceRole.objects.all()
@@ -1768,6 +1810,7 @@ class DeviceRoleBulkDeleteView(generic.BulkDeleteView):
         device_count=count_related(Device, 'device_role'),
         vm_count=count_related(VirtualMachine, 'role')
     )
+    filterset = filtersets.DeviceRoleFilterSet
     table = tables.DeviceRoleTable
 
 
@@ -1828,6 +1871,7 @@ class PlatformBulkEditView(generic.BulkEditView):
 
 class PlatformBulkDeleteView(generic.BulkDeleteView):
     queryset = Platform.objects.all()
+    filterset = filtersets.PlatformFilterSet
     table = tables.PlatformTable
 
 
@@ -1949,7 +1993,7 @@ class DeviceInterfacesView(DeviceComponentsView):
     template_name = 'dcim/device/interfaces.html'
     tab = ViewTab(
         label=_('Interfaces'),
-        badge=lambda obj: obj.interfaces.count(),
+        badge=lambda obj: obj.vc_interfaces().count(),
         permission='dcim.view_interface',
         weight=520,
         hide_if_empty=True
@@ -2052,22 +2096,15 @@ class DeviceBulkImportView(generic.BulkImportView):
     queryset = Device.objects.all()
     model_form = forms.DeviceImportForm
     table = tables.DeviceImportTable
-    template_name = 'dcim/device_import.html'
-
-
-class ChildDeviceBulkImportView(generic.BulkImportView):
-    queryset = Device.objects.all()
-    model_form = forms.ChildDeviceImportForm
-    table = tables.DeviceImportTable
-    template_name = 'dcim/device_import_child.html'
 
     def save_object(self, object_form, request):
         obj = object_form.save()
 
-        # Save the reverse relation to the parent device bay
-        device_bay = obj.parent_bay
-        device_bay.installed_device = obj
-        device_bay.save()
+        # For child devices, save the reverse relation to the parent device bay
+        if getattr(obj, 'parent_bay', None):
+            device_bay = obj.parent_bay
+            device_bay.installed_device = obj
+            device_bay.save()
 
         return obj
 
@@ -2820,7 +2857,7 @@ class DeviceBayPopulateView(generic.ObjectEditView):
         form = forms.PopulateDeviceBayForm(device_bay, request.POST)
 
         if form.is_valid():
-
+            device_bay.snapshot()
             device_bay.installed_device = form.cleaned_data['installed_device']
             device_bay.save()
             messages.success(request, "Added {} to {}.".format(device_bay.installed_device, device_bay))
@@ -2854,7 +2891,7 @@ class DeviceBayDepopulateView(generic.ObjectEditView):
         form = ConfirmationForm(request.POST)
 
         if form.is_valid():
-
+            device_bay.snapshot()
             removed_device = device_bay.installed_device
             device_bay.installed_device = None
             device_bay.save()
@@ -2948,6 +2985,7 @@ class InventoryItemBulkRenameView(generic.BulkRenameView):
 
 class InventoryItemBulkDeleteView(generic.BulkDeleteView):
     queryset = InventoryItem.objects.all()
+    filterset = filtersets.InventoryItemFilterSet
     table = tables.InventoryItemTable
     template_name = 'dcim/inventoryitem_bulk_delete.html'
 
@@ -3005,6 +3043,7 @@ class InventoryItemRoleBulkDeleteView(generic.BulkDeleteView):
     queryset = InventoryItemRole.objects.annotate(
         inventoryitem_count=count_related(InventoryItem, 'role'),
     )
+    filterset = filtersets.InventoryItemRoleFilterSet
     table = tables.InventoryItemRoleTable
 
 

@@ -20,10 +20,12 @@ from netbox.models import ChangeLoggedModel
 from netbox.models.features import CloningMixin, ExportTemplatesMixin, WebhooksMixin
 from netbox.search import FieldTypes
 from utilities import filters
-from utilities.forms import (
-    CSVChoiceField, CSVMultipleChoiceField, DatePicker, DynamicModelChoiceField, DynamicModelMultipleChoiceField,
-    JSONField, LaxURLField, StaticSelectMultiple, StaticSelect, add_blank_choice,
+from utilities.forms.fields import (
+    CSVChoiceField, CSVModelChoiceField, CSVModelMultipleChoiceField, CSVMultipleChoiceField, DynamicModelChoiceField,
+    DynamicModelMultipleChoiceField, JSONField, LaxURLField,
 )
+from utilities.forms.widgets import DatePicker, StaticSelectMultiple, StaticSelect
+from utilities.forms.utils import add_blank_choice
 from utilities.querysets import RestrictedQuerySet
 from utilities.validators import validate_regex
 
@@ -213,7 +215,7 @@ class CustomField(CloningMixin, ExportTemplatesMixin, WebhooksMixin, ChangeLogge
         """
         for ct in content_types:
             model = ct.model_class()
-            instances = model.objects.filter(**{f'custom_field_data__{self.name}__isnull': False})
+            instances = model.objects.filter(custom_field_data__has_key=self.name)
             for instance in instances:
                 del instance.custom_field_data[self.name]
             model.objects.bulk_update(instances, ['custom_field_data'], batch_size=100)
@@ -273,10 +275,13 @@ class CustomField(CloningMixin, ExportTemplatesMixin, WebhooksMixin, ChangeLogge
                 'choices': "Choices may be set only for custom selection fields."
             })
 
-        # A selection field must have at least two choices defined
-        if self.type == CustomFieldTypeChoices.TYPE_SELECT and self.choices and len(self.choices) < 2:
+        # Selection fields must have at least one choice defined
+        if self.type in (
+                CustomFieldTypeChoices.TYPE_SELECT,
+                CustomFieldTypeChoices.TYPE_MULTISELECT
+        ) and not self.choices:
             raise ValidationError({
-                'choices': "Selection fields must specify at least two choices."
+                'choices': "Selection fields must specify at least one choice."
             })
 
         # A selection field's default (if any) must be present in its available choices
@@ -410,7 +415,8 @@ class CustomField(CloningMixin, ExportTemplatesMixin, WebhooksMixin, ChangeLogge
         # Object
         elif self.type == CustomFieldTypeChoices.TYPE_OBJECT:
             model = self.object_type.model_class()
-            field = DynamicModelChoiceField(
+            field_class = CSVModelChoiceField if for_csv_import else DynamicModelChoiceField
+            field = field_class(
                 queryset=model.objects.all(),
                 required=required,
                 initial=initial
@@ -419,10 +425,11 @@ class CustomField(CloningMixin, ExportTemplatesMixin, WebhooksMixin, ChangeLogge
         # Multiple objects
         elif self.type == CustomFieldTypeChoices.TYPE_MULTIOBJECT:
             model = self.object_type.model_class()
-            field = DynamicModelMultipleChoiceField(
+            field_class = CSVModelMultipleChoiceField if for_csv_import else DynamicModelMultipleChoiceField
+            field = field_class(
                 queryset=model.objects.all(),
                 required=required,
-                initial=initial
+                initial=initial,
             )
 
         # Text

@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 from functools import cached_property
 
@@ -111,7 +112,11 @@ class CloningMixin(models.Model):
         for field_name in getattr(self, 'clone_fields', []):
             field = self._meta.get_field(field_name)
             field_value = field.value_from_object(self)
-            if field_value not in (None, ''):
+            if field_value and isinstance(field, models.ManyToManyField):
+                attrs[field_name] = [v.pk for v in field_value]
+            elif field_value and isinstance(field, models.JSONField):
+                attrs[field_name] = json.dumps(field_value)
+            elif field_value not in (None, ''):
                 attrs[field_name] = field_value
 
         # Include tags (if applicable)
@@ -216,6 +221,13 @@ class CustomFieldsMixin(models.Model):
 
         return dict(groups)
 
+    def populate_custom_field_defaults(self):
+        """
+        Apply the default value for each custom field
+        """
+        for cf in self.custom_fields:
+            self.custom_field_data[cf.name] = cf.default
+
     def clean(self):
         super().clean()
         from extras.models import CustomField
@@ -256,6 +268,10 @@ class CustomValidationMixin(models.Model):
 
     def clean(self):
         super().clean()
+
+        # If the instance is a base for replications, skip custom validation
+        if getattr(self, '_replicated_base', False):
+            return
 
         # Send the post_clean signal
         post_clean.send(sender=self.__class__, instance=self)

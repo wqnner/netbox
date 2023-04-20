@@ -10,6 +10,7 @@ from ipam.models import *
 from utilities.testing import ChangeLoggedFilterSetTests, create_test_device, create_test_virtualmachine
 from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualMachine, VMInterface
 from tenancy.models import Tenant, TenantGroup
+from rest_framework import serializers
 
 
 class ASNTestCase(TestCase, ChangeLoggedFilterSetTests):
@@ -680,6 +681,14 @@ class IPRangeTestCase(TestCase, ChangeLoggedFilterSetTests):
         params = {'family': '6'}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
 
+    def test_start_address(self):
+        params = {'start_address': ['10.0.1.100', '10.0.2.100']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+    def test_end_address(self):
+        params = {'end_address': ['10.0.1.199', '10.0.2.199']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
     def test_contains(self):
         params = {'contains': '10.0.1.150/24'}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 1)
@@ -841,6 +850,26 @@ class IPAddressTestCase(TestCase, ChangeLoggedFilterSetTests):
         params = {'address': ['2001:db8::1']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
         params = {'address': ['2001:db8::1/64', '2001:db8::1/65']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+        # Check for valid edge cases. Note that Postgres inet type
+        # only accepts netmasks in the int form, so the filterset
+        # casts netmasks in the xxx.xxx.xxx.xxx format.
+        params = {'address': ['24']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 0)
+        params = {'address': ['10.0.0.1/255.255.255.0']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 1)
+        params = {'address': ['10.0.0.1/255.255.255.0', '10.0.0.1/25']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+        # Check for invalid input.
+        params = {'address': ['/24']}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 0)
+        params = {'address': ['10.0.0.1/255.255.999.0']}  # Invalid netmask
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 0)
+
+        # Check for partially invalid input.
+        params = {'address': ['10.0.0.1', '/24', '10.0.0.10/24']}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
     def test_mask_length(self):
@@ -1420,6 +1449,19 @@ class ServiceTestCase(TestCase, ChangeLoggedFilterSetTests):
         )
         Device.objects.bulk_create(devices)
 
+        interface = Interface.objects.create(
+            device=devices[0],
+            name='eth0',
+            type=InterfaceTypeChoices.TYPE_VIRTUAL
+        )
+        interface_ct = ContentType.objects.get_for_model(Interface).pk
+        ip_addresses = (
+            IPAddress(address='192.0.2.1/24', assigned_object_type_id=interface_ct, assigned_object_id=interface.pk),
+            IPAddress(address='192.0.2.2/24', assigned_object_type_id=interface_ct, assigned_object_id=interface.pk),
+            IPAddress(address='192.0.2.3/24', assigned_object_type_id=interface_ct, assigned_object_id=interface.pk),
+        )
+        IPAddress.objects.bulk_create(ip_addresses)
+
         clustertype = ClusterType.objects.create(name='Cluster Type 1', slug='cluster-type-1')
         cluster = Cluster.objects.create(type=clustertype, name='Cluster 1')
 
@@ -1439,6 +1481,9 @@ class ServiceTestCase(TestCase, ChangeLoggedFilterSetTests):
             Service(virtual_machine=virtual_machines[2], name='Service 6', protocol=ServiceProtocolChoices.PROTOCOL_UDP, ports=[2003]),
         )
         Service.objects.bulk_create(services)
+        services[0].ipaddresses.add(ip_addresses[0])
+        services[1].ipaddresses.add(ip_addresses[1])
+        services[2].ipaddresses.add(ip_addresses[2])
 
     def test_name(self):
         params = {'name': ['Service 1', 'Service 2']}
@@ -1468,6 +1513,13 @@ class ServiceTestCase(TestCase, ChangeLoggedFilterSetTests):
         params = {'virtual_machine_id': [vms[0].pk, vms[1].pk]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
         params = {'virtual_machine': [vms[0].name, vms[1].name]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+
+    def test_ipaddress(self):
+        ips = IPAddress.objects.all()[:2]
+        params = {'ipaddress_id': [ips[0].pk, ips[1].pk]}
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
+        params = {'ipaddress': [str(ips[0].address), str(ips[1].address)]}
         self.assertEqual(self.filterset(params, self.queryset).qs.count(), 2)
 
 

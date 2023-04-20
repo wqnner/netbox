@@ -1,8 +1,8 @@
 from django import forms
-from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from utilities.forms import BootstrapMixin, DateTimePicker, SelectDurationWidget
+from utilities.utils import local_now
 
 __all__ = (
     'ScriptForm',
@@ -34,7 +34,7 @@ class ScriptForm(BootstrapMixin, forms.Form):
         super().__init__(*args, **kwargs)
 
         # Annotate the current system time for reference
-        now = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+        now = local_now().strftime('%Y-%m-%d %H:%M:%S')
         self.fields['_schedule_at'].help_text += f' (current time: <strong>{now}</strong>)'
 
         # Move _commit and _schedule_at to the end of the form
@@ -45,12 +45,16 @@ class ScriptForm(BootstrapMixin, forms.Form):
         self.fields['_interval'] = interval
         self.fields['_commit'] = commit
 
-    def clean__schedule_at(self):
+    def clean(self):
         scheduled_time = self.cleaned_data['_schedule_at']
-        if scheduled_time and scheduled_time < timezone.now():
+        if scheduled_time and scheduled_time < local_now():
             raise forms.ValidationError(_('Scheduled time must be in the future.'))
 
-        return scheduled_time
+        # When interval is used without schedule at, raise an exception
+        if self.cleaned_data['_interval'] and not scheduled_time:
+            self.cleaned_data['_schedule_at'] = local_now()
+
+        return self.cleaned_data
 
     @property
     def requires_input(self):

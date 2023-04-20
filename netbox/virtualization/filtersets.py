@@ -2,9 +2,9 @@ import django_filters
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
+from dcim.filtersets import CommonInterfaceFilterSet
 from dcim.models import Device, DeviceRole, Platform, Region, Site, SiteGroup
 from extras.filtersets import LocalConfigContextFilterSet
-from ipam.models import VRF
 from netbox.filtersets import OrganizationalModelFilterSet, NetBoxModelFilterSet
 from tenancy.filtersets import TenancyFilterSet, ContactModelFilterSet
 from utilities.filters import MultiValueCharFilter, MultiValueMACAddressFilter, TreeNodeMultipleChoiceFilter
@@ -238,7 +238,9 @@ class VirtualMachineFilterSet(
             return queryset
         return queryset.filter(
             Q(name__icontains=value) |
-            Q(comments__icontains=value)
+            Q(comments__icontains=value) |
+            Q(primary_ip4__address__startswith=value) |
+            Q(primary_ip6__address__startswith=value)
         )
 
     def _has_primary_ip(self, queryset, name, value):
@@ -248,7 +250,7 @@ class VirtualMachineFilterSet(
         return queryset.exclude(params)
 
 
-class VMInterfaceFilterSet(NetBoxModelFilterSet):
+class VMInterfaceFilterSet(NetBoxModelFilterSet, CommonInterfaceFilterSet):
     cluster_id = django_filters.ModelMultipleChoiceFilter(
         field_name='virtual_machine__cluster',
         queryset=Cluster.objects.all(),
@@ -283,17 +285,6 @@ class VMInterfaceFilterSet(NetBoxModelFilterSet):
     )
     mac_address = MultiValueMACAddressFilter(
         label=_('MAC address'),
-    )
-    vrf_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='vrf',
-        queryset=VRF.objects.all(),
-        label=_('VRF'),
-    )
-    vrf = django_filters.ModelMultipleChoiceFilter(
-        field_name='vrf__rd',
-        queryset=VRF.objects.all(),
-        to_field_name='rd',
-        label=_('VRF (RD)'),
     )
 
     class Meta:

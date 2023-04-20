@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from utilities.forms import BootstrapMixin, DateTimePicker, SelectDurationWidget
+from utilities.utils import local_now
 
 __all__ = (
     'ReportForm',
@@ -24,16 +25,20 @@ class ReportForm(BootstrapMixin, forms.Form):
         help_text=_("Interval at which this report is re-run (in minutes)")
     )
 
-    def clean_schedule_at(self):
+    def clean(self):
         scheduled_time = self.cleaned_data['schedule_at']
-        if scheduled_time and scheduled_time < timezone.now():
+        if scheduled_time and scheduled_time < local_now():
             raise forms.ValidationError(_('Scheduled time must be in the future.'))
 
-        return scheduled_time
+        # When interval is used without schedule at, raise an exception
+        if self.cleaned_data['interval'] and not scheduled_time:
+            self.cleaned_data['schedule_at'] = local_now()
+
+        return self.cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Annotate the current system time for reference
-        now = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+        now = local_now().strftime('%Y-%m-%d %H:%M:%S')
         self.fields['schedule_at'].help_text += f' (current time: <strong>{now}</strong>)'

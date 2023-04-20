@@ -112,6 +112,10 @@ class Cable(PrimaryModel):
     def a_terminations(self):
         if hasattr(self, '_a_terminations'):
             return self._a_terminations
+
+        if not self.pk:
+            return []
+
         # Query self.terminations.all() to leverage cached results
         return [
             ct.termination for ct in self.terminations.all() if ct.cable_end == CableEndChoices.SIDE_A
@@ -119,13 +123,18 @@ class Cable(PrimaryModel):
 
     @a_terminations.setter
     def a_terminations(self, value):
-        self._terminations_modified = True
+        if not self.pk or self.a_terminations != list(value):
+            self._terminations_modified = True
         self._a_terminations = value
 
     @property
     def b_terminations(self):
         if hasattr(self, '_b_terminations'):
             return self._b_terminations
+
+        if not self.pk:
+            return []
+
         # Query self.terminations.all() to leverage cached results
         return [
             ct.termination for ct in self.terminations.all() if ct.cable_end == CableEndChoices.SIDE_B
@@ -133,7 +142,8 @@ class Cable(PrimaryModel):
 
     @b_terminations.setter
     def b_terminations(self, value):
-        self._terminations_modified = True
+        if not self.pk or self.b_terminations != list(value):
+            self._terminations_modified = True
         self._b_terminations = value
 
     def clean(self):
@@ -142,8 +152,6 @@ class Cable(PrimaryModel):
         # Validate length and length_unit
         if self.length is not None and not self.length_unit:
             raise ValidationError("Must specify a unit when setting a cable length")
-        elif self.length is None:
-            self.length_unit = ''
 
         if self.pk is None and (not self.a_terminations or not self.b_terminations):
             raise ValidationError("Must define A and B terminations when creating a new cable.")
@@ -176,6 +184,10 @@ class Cable(PrimaryModel):
             self._abs_length = to_meters(self.length, self.length_unit)
         else:
             self._abs_length = None
+
+        # Clear length_unit if no length is defined
+        if self.length is None:
+            self.length_unit = ''
 
         super().save(*args, **kwargs)
 
@@ -527,7 +539,7 @@ class CablePath(models.Model):
 
             # Step 5: Record the far-end termination object(s)
             path.append([
-                object_to_path_node(t) for t in remote_terminations
+                object_to_path_node(t) for t in remote_terminations if t is not None
             ])
 
             # Step 6: Determine the "next hop" terminations, if applicable

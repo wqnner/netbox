@@ -180,7 +180,7 @@ class ImportForm(BootstrapMixin, forms.Form):
         if 'data_file' in self.files:
             self.data_field = 'data_file'
             file = self.files.get('data_file')
-            data = file.read().decode('utf-8')
+            data = file.read().decode('utf-8-sig')
         else:
             data = self.cleaned_data['data']
 
@@ -197,6 +197,8 @@ class ImportForm(BootstrapMixin, forms.Form):
             self.cleaned_data['data'] = self._clean_json(data)
         elif format == ImportFormatChoices.YAML:
             self.cleaned_data['data'] = self._clean_yaml(data)
+        else:
+            raise forms.ValidationError(f"Unknown data format: {format}")
 
     def _detect_format(self, data):
         """

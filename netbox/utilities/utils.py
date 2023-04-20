@@ -12,6 +12,8 @@ from django.db.models import Count, OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.http import QueryDict
 from django.utils.html import escape
+from django.utils import timezone
+from django.utils.timezone import localtime
 from jinja2.sandbox import SandboxedEnvironment
 from mptt.models import MPTTModel
 
@@ -46,6 +48,10 @@ def get_viewname(model, action=None, rest_api=False):
         if is_plugin:
             viewname = f'plugins-api:{app_label}-api:{model_name}'
         else:
+            # Alter the app_label for group and user model_name to point to users app
+            if app_label == 'auth' and model_name in ['group', 'user']:
+                app_label = 'users'
+
             viewname = f'{app_label}-api:{model_name}'
         # Append the action, if any
         if action:
@@ -357,18 +363,18 @@ def prepare_cloned_fields(instance):
     return QueryDict(urlencode(params), mutable=True)
 
 
-def shallow_compare_dict(source_dict, destination_dict, exclude=None):
+def shallow_compare_dict(source_dict, destination_dict, exclude=tuple()):
     """
     Return a new dictionary of the different keys. The values of `destination_dict` are returned. Only the equality of
     the first layer of keys/values is checked. `exclude` is a list or tuple of keys to be ignored.
     """
     difference = {}
 
-    for key in destination_dict:
-        if source_dict.get(key) != destination_dict[key]:
-            if isinstance(exclude, (list, tuple)) and key in exclude:
-                continue
-            difference[key] = destination_dict[key]
+    for key, value in destination_dict.items():
+        if key in exclude:
+            continue
+        if source_dict.get(key) != value:
+            difference[key] = value
 
     return difference
 
@@ -512,11 +518,22 @@ def clean_html(html, schemes):
 def highlight_string(value, highlight, trim_pre=None, trim_post=None, trim_placeholder='...'):
     """
     Highlight a string within a string and optionally trim the pre/post portions of the original string.
+
+    Args:
+        value: The body of text being searched against
+        highlight: The string of compiled regex pattern to highlight in `value`
+        trim_pre: Maximum length of pre-highlight text to include
+        trim_post: Maximum length of post-highlight text to include
+        trim_placeholder: String value to swap in for trimmed pre/post text
     """
     # Split value on highlight string
     try:
-        pre, match, post = re.split(fr'({highlight})', value, maxsplit=1, flags=re.IGNORECASE)
-    except ValueError:
+        if type(highlight) is re.Pattern:
+            pre, match, post = highlight.split(value, maxsplit=1)
+        else:
+            highlight = re.escape(highlight)
+            pre, match, post = re.split(fr'({highlight})', value, maxsplit=1, flags=re.IGNORECASE)
+    except ValueError as e:
         # Match not found
         return escape(value)
 
@@ -527,3 +544,10 @@ def highlight_string(value, highlight, trim_pre=None, trim_post=None, trim_place
         post = post[:trim_post] + trim_placeholder
 
     return f'{escape(pre)}<mark>{escape(match)}</mark>{escape(post)}'
+
+
+def local_now():
+    """
+    Return the current date & time in the system timezone.
+    """
+    return localtime(timezone.now())

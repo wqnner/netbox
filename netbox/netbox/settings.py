@@ -24,7 +24,7 @@ from netbox.constants import RQ_QUEUE_DEFAULT, RQ_QUEUE_HIGH, RQ_QUEUE_LOW
 # Environment setup
 #
 
-VERSION = '3.4.3-dev'
+VERSION = '3.4.9-dev'
 
 # Hostname
 HOSTNAME = platform.node()
@@ -91,6 +91,7 @@ DOCS_ROOT = getattr(configuration, 'DOCS_ROOT', os.path.join(os.path.dirname(BAS
 EMAIL = getattr(configuration, 'EMAIL', {})
 EXEMPT_VIEW_PERMISSIONS = getattr(configuration, 'EXEMPT_VIEW_PERMISSIONS', [])
 FIELD_CHOICES = getattr(configuration, 'FIELD_CHOICES', {})
+FILE_UPLOAD_MAX_MEMORY_SIZE = getattr(configuration, 'FILE_UPLOAD_MAX_MEMORY_SIZE', 2621440)
 HTTP_PROXIES = getattr(configuration, 'HTTP_PROXIES', None)
 INTERNAL_IPS = getattr(configuration, 'INTERNAL_IPS', ('127.0.0.1', '::1'))
 JINJA2_FILTERS = getattr(configuration, 'JINJA2_FILTERS', {})
@@ -112,6 +113,9 @@ REMOTE_AUTH_DEFAULT_GROUPS = getattr(configuration, 'REMOTE_AUTH_DEFAULT_GROUPS'
 REMOTE_AUTH_DEFAULT_PERMISSIONS = getattr(configuration, 'REMOTE_AUTH_DEFAULT_PERMISSIONS', {})
 REMOTE_AUTH_ENABLED = getattr(configuration, 'REMOTE_AUTH_ENABLED', False)
 REMOTE_AUTH_HEADER = getattr(configuration, 'REMOTE_AUTH_HEADER', 'HTTP_REMOTE_USER')
+REMOTE_AUTH_USER_FIRST_NAME = getattr(configuration, 'REMOTE_AUTH_USER_FIRST_NAME', 'HTTP_REMOTE_USER_FIRST_NAME')
+REMOTE_AUTH_USER_LAST_NAME = getattr(configuration, 'REMOTE_AUTH_USER_LAST_NAME', 'HTTP_REMOTE_USER_LAST_NAME')
+REMOTE_AUTH_USER_EMAIL = getattr(configuration, 'REMOTE_AUTH_USER_EMAIL', 'HTTP_REMOTE_USER_EMAIL')
 REMOTE_AUTH_GROUP_HEADER = getattr(configuration, 'REMOTE_AUTH_GROUP_HEADER', 'HTTP_REMOTE_USER_GROUP')
 REMOTE_AUTH_GROUP_SYNC_ENABLED = getattr(configuration, 'REMOTE_AUTH_GROUP_SYNC_ENABLED', False)
 REMOTE_AUTH_SUPERUSER_GROUPS = getattr(configuration, 'REMOTE_AUTH_SUPERUSER_GROUPS', [])
@@ -235,6 +239,7 @@ TASKS_REDIS_PASSWORD = TASKS_REDIS.get('PASSWORD', '')
 TASKS_REDIS_DATABASE = TASKS_REDIS.get('DATABASE', 0)
 TASKS_REDIS_SSL = TASKS_REDIS.get('SSL', False)
 TASKS_REDIS_SKIP_TLS_VERIFY = TASKS_REDIS.get('INSECURE_SKIP_TLS_VERIFY', False)
+TASKS_REDIS_CA_CERT_PATH = TASKS_REDIS.get('CA_CERT_PATH', False)
 
 # Caching
 if 'caching' not in REDIS:
@@ -251,6 +256,7 @@ CACHING_REDIS_SENTINELS = REDIS['caching'].get('SENTINELS', [])
 CACHING_REDIS_SENTINEL_SERVICE = REDIS['caching'].get('SENTINEL_SERVICE', 'default')
 CACHING_REDIS_PROTO = 'rediss' if REDIS['caching'].get('SSL', False) else 'redis'
 CACHING_REDIS_SKIP_TLS_VERIFY = REDIS['caching'].get('INSECURE_SKIP_TLS_VERIFY', False)
+CACHING_REDIS_CA_CERT_PATH = REDIS['caching'].get('CA_CERT_PATH', False)
 
 CACHES = {
     'default': {
@@ -262,6 +268,8 @@ CACHES = {
         }
     }
 }
+
+
 if CACHING_REDIS_SENTINELS:
     DJANGO_REDIS_CONNECTION_FACTORY = 'django_redis.pool.SentinelConnectionFactory'
     CACHES['default']['LOCATION'] = f'{CACHING_REDIS_PROTO}://{CACHING_REDIS_SENTINEL_SERVICE}/{CACHING_REDIS_DATABASE}'
@@ -270,7 +278,9 @@ if CACHING_REDIS_SENTINELS:
 if CACHING_REDIS_SKIP_TLS_VERIFY:
     CACHES['default']['OPTIONS'].setdefault('CONNECTION_POOL_KWARGS', {})
     CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS']['ssl_cert_reqs'] = False
-
+if CACHING_REDIS_CA_CERT_PATH:
+    CACHES['default']['OPTIONS'].setdefault('CONNECTION_POOL_KWARGS', {})
+    CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS']['ssl_ca_certs'] = CACHING_REDIS_CA_CERT_PATH
 
 #
 # Sessions
@@ -389,8 +399,10 @@ TEMPLATES = [
 ]
 
 # Set up authentication backends
+if type(REMOTE_AUTH_BACKEND) not in (list, tuple):
+    REMOTE_AUTH_BACKEND = [REMOTE_AUTH_BACKEND]
 AUTHENTICATION_BACKENDS = [
-    REMOTE_AUTH_BACKEND,
+    *REMOTE_AUTH_BACKEND,
     'netbox.authentication.ObjectPermissionBackend',
 ]
 
@@ -647,6 +659,10 @@ RQ_PARAMS.update({
     'PASSWORD': TASKS_REDIS_PASSWORD,
     'DEFAULT_TIMEOUT': RQ_DEFAULT_TIMEOUT,
 })
+
+if TASKS_REDIS_CA_CERT_PATH:
+    RQ_PARAMS.setdefault('REDIS_CLIENT_KWARGS', {})
+    RQ_PARAMS['REDIS_CLIENT_KWARGS']['ssl_ca_certs'] = TASKS_REDIS_CA_CERT_PATH
 
 RQ_QUEUES = {
     RQ_QUEUE_HIGH: RQ_PARAMS,
