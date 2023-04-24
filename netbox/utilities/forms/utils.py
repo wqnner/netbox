@@ -18,7 +18,7 @@ __all__ = (
     'parse_numeric_range',
     'restrict_form_fields',
     'parse_csv',
-    'validate_csv',
+    'validate_import_headers',
 )
 
 
@@ -242,7 +242,7 @@ def parse_csv(reader):
     return headers, records
 
 
-def validate_csv(headers, fields, required_fields):
+def validate_import_headers(headers, fields, required_fields):
     """
     Validate that parsed csv data conforms to the object's available fields. Raise validation errors
     if parsed csv data contains invalid headers or does not contain required headers.

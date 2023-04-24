@@ -21,6 +21,7 @@ from utilities.error_handlers import handle_protectederror
 from utilities.exceptions import AbortRequest, AbortTransaction, PermissionsViolation
 from utilities.forms import BulkRenameForm, ConfirmationForm, restrict_form_fields
 from utilities.forms.bulk_import import BulkImportForm
+from utilities.forms.utils import validate_import_headers
 from utilities.htmx import is_embedded, is_htmx
 from utilities.permissions import get_permission_for_model
 from utilities.utils import get_viewname
@@ -394,6 +395,14 @@ class BulkImportView(GetReturnURLMixin, BaseMultiObjectView):
             if hasattr(form, '_csv_headers'):
                 model_form_kwargs['headers'] = form._csv_headers  # Add CSV headers
             model_form = self.model_form(**model_form_kwargs)
+
+            # validate the fields (required fields are present and no unknown fields)
+            form_fields = model_form.fields
+            required_fields = [
+                name for name, field in form_fields.items() if field.required
+            ]
+            headers = list(record.keys())
+            validate_import_headers(headers, form_fields, required_fields)
 
             # When updating, omit all form fields other than those specified in the record. (No
             # fields are required when modifying an existing object.)
