@@ -236,7 +236,7 @@ def parse_csv(reader):
     headers = {}
 
     # Consume the first line of CSV data as column headers.
-    headers = headers_to_dict(list(reader))
+    headers = headers_to_dict(list(next(reader)))
 
     # Parse CSV rows into a list of dictionaries mapped from the column headers.
     for i, row in enumerate(reader, start=1):
