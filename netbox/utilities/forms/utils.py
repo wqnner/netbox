@@ -220,7 +220,7 @@ def headers_to_dict(headers):
                 raise forms.ValidationError(f'Duplicate or conflicting column header for "{field}"')
             header_dict[field] = to_field
         else:
-            if header in headers:
+            if header in header_dict:
                 raise forms.ValidationError(f'Duplicate or conflicting column header for "{header}"')
             header_dict[header] = None
 
