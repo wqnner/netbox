@@ -23,8 +23,7 @@ from utilities.exceptions import AbortRequest, AbortTransaction, PermissionsViol
 from utilities.forms import BulkRenameForm, ConfirmationForm, restrict_form_fields
 from utilities.forms.bulk_import import BulkImportForm
 from utilities.forms.utils import headers_to_dict, validate_import_headers
-from utilities.htmx import is_embedded
-from utilities.htmx import is_htmx
+from utilities.htmx import is_embedded, is_htmx
 from utilities.permissions import get_permission_for_model
 from utilities.utils import get_viewname
 from utilities.views import GetReturnURLMixin
