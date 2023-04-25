@@ -205,6 +205,28 @@ def restrict_form_fields(form, user, action='view'):
             field.queryset = field.queryset.restrict(user, action)
 
 
+def headers_to_dict(headers):
+    """
+    Create a dictionary mapping each header to an optional "to" field specifying how
+    the related object is being referenced. For example, importing a Device might use a
+    `site.slug` header, to indicate the related site is being referenced by its slug.
+    """
+    header_dict = {}
+    for header in headers:
+        header = header.strip()
+        if '.' in header:
+            field, to_field = header.split('.', 1)
+            if field in headers:
+                raise forms.ValidationError(f'Duplicate or conflicting column header for "{field}"')
+            header_dict[field] = to_field
+        else:
+            if header in headers:
+                raise forms.ValidationError(f'Duplicate or conflicting column header for "{header}"')
+            header_dict[header] = None
+
+    return header_dict
+
+
 def parse_csv(reader):
     """
     Parse a csv_reader object into a headers dictionary and a list of records dictionaries. Raise an error
@@ -213,21 +235,8 @@ def parse_csv(reader):
     records = []
     headers = {}
 
-    # Consume the first line of CSV data as column headers. Create a dictionary mapping each header to an optional
-    # "to" field specifying how the related object is being referenced. For example, importing a Device might use a
-    # `site.slug` header, to indicate the related site is being referenced by its slug.
-
-    for header in next(reader):
-        header = header.strip()
-        if '.' in header:
-            field, to_field = header.split('.', 1)
-            if field in headers:
-                raise forms.ValidationError(f'Duplicate or conflicting column header for "{field}"')
-            headers[field] = to_field
-        else:
-            if header in headers:
-                raise forms.ValidationError(f'Duplicate or conflicting column header for "{header}"')
-            headers[header] = None
+    # Consume the first line of CSV data as column headers.
+    headers = headers_to_dict(list(reader))
 
     # Parse CSV rows into a list of dictionaries mapped from the column headers.
     for i, row in enumerate(reader, start=1):
