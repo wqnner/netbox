@@ -216,7 +216,7 @@ def headers_to_dict(headers):
         header = header.strip()
         if '.' in header:
             field, to_field = header.split('.', 1)
-            if field in headers:
+            if field in header_dict:
                 raise forms.ValidationError(f'Duplicate or conflicting column header for "{field}"')
             header_dict[field] = to_field
         else:
