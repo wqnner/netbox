@@ -251,7 +251,7 @@ def parse_csv(reader):
     return headers, records
 
 
-def validate_import_headers(headers, fields, required_fields):
+def validate_import_headers(headers, fields, required_fields, allow_extra_columns=False):
     """
     Validate that parsed csv data conforms to the object's available fields. Raise validation errors
     if parsed csv data contains invalid headers or does not contain required headers.
@@ -262,7 +262,7 @@ def validate_import_headers(headers, fields, required_fields):
         if field == "id":
             is_update = True
             continue
-        if field not in fields:
+        if (not allow_extra_columns) and (field not in fields):
             raise forms.ValidationError(f'Unexpected column header "{field}" found.')
         if to_field and not hasattr(fields[field], 'to_field_name'):
             raise forms.ValidationError(f'Column "{field}" is not a related object; cannot use dots')

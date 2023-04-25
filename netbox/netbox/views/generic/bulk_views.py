@@ -15,6 +15,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django_tables2.export import TableExport
 
+from dcim.forms.bulk_import import DeviceTypeImportForm, ModuleTypeImportForm
 from extras.models import ExportTemplate
 from extras.signals import clear_webhooks
 from utilities.error_handlers import handle_protectederror
@@ -406,7 +407,7 @@ class BulkImportView(GetReturnURLMixin, BaseMultiObjectView):
             ]
             if not headers:
                 headers = headers_to_dict(list(record.keys()))
-            validate_import_headers(headers, form_fields, required_fields)
+            validate_import_headers(headers, form_fields, required_fields, allow_extra_columns=isinstance(model_form, (DeviceTypeImportForm, ModuleTypeImportForm)))
 
             # When updating, omit all form fields other than those specified in the record. (No
             # fields are required when modifying an existing object.)
