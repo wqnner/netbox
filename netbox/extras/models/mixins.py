@@ -13,6 +13,11 @@ class PythonModuleMixin:
         return os.path.splitext(self.file_path)[0]
 
     @property
+    def url_path(self):
+        path, _ = os.path.split(self.data_path)
+        return f"{path}/{self.python_name}"
+
+    @property
     def python_name(self):
         path, filename = os.path.split(self.full_path)
         name = os.path.splitext(filename)[0]

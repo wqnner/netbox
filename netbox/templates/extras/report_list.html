@@ -54,7 +54,7 @@
                   {% with last_job=jobs|get_key:report.name %}
                     <tr>
                       <td>
-                        <a href="{% url 'extras:report' module=module.python_name name=report.class_name %}" id="{{ report.module }}.{{ report.class_name }}">{{ report.name }}</a>
+                        <a href="{% url 'extras:report' module=module.url_path name=report.class_name %}" id="{{ report.module }}.{{ report.class_name }}">{{ report.name }}</a>
                       </td>
                       <td>{{ report.description|markdown|placeholder }}</td>
                       {% if last_job %}
