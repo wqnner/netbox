@@ -15,7 +15,7 @@ from django.utils.html import escape
 from django.utils import timezone
 from django.utils.timezone import localtime
 from jinja2.sandbox import SandboxedEnvironment
-from mptt.models import MPTTModel
+from tree_queries.models import TreeNode
 
 from dcim.choices import CableLengthUnitChoices, WeightUnitChoices
 from extras.plugins import PluginConfig
@@ -153,8 +153,8 @@ def serialize_object(obj, resolve_tags=True, extra=None):
     json_str = serializers.serialize('json', [obj])
     data = json.loads(json_str)[0]['fields']
 
-    # Exclude any MPTTModel fields
-    if issubclass(obj.__class__, MPTTModel):
+    # Exclude any TreeNode fields
+    if issubclass(obj.__class__, TreeNode):
         for field in ['level', 'lft', 'rght', 'tree_id']:
             data.pop(field)
 

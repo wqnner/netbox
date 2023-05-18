@@ -15,13 +15,14 @@ class WirelessRootView(APIRootView):
 
 
 class WirelessLANGroupViewSet(NetBoxModelViewSet):
-    queryset = WirelessLANGroup.objects.add_related_count(
-        WirelessLANGroup.objects.all(),
-        WirelessLAN,
-        'group',
-        'wirelesslan_count',
-        cumulative=True
-    )
+    queryset = WirelessLANGroup.objects.all()
+    # queryset = WirelessLANGroup.objects.add_related_count(
+    #     WirelessLANGroup.objects.all(),
+    #     WirelessLAN,
+    #     'group',
+    #     'wirelesslan_count',
+    #     cumulative=True
+    # )
     serializer_class = serializers.WirelessLANGroupSerializer
     filterset_class = filtersets.WirelessLANGroupFilterSet
 

@@ -198,13 +198,14 @@ class PathTraceView(generic.ObjectView):
 #
 
 class RegionListView(generic.ObjectListView):
-    queryset = Region.objects.add_related_count(
-        Region.objects.all(),
-        Site,
-        'region',
-        'site_count',
-        cumulative=True
-    )
+    queryset = Region.objects.all()
+    # queryset = Region.objects.add_related_count(
+    #     Region.objects.all(),
+    #     Site,
+    #     'region',
+    #     'site_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.RegionFilterSet
     filterset_form = forms.RegionFilterForm
     table = tables.RegionTable
@@ -244,26 +245,28 @@ class RegionBulkImportView(generic.BulkImportView):
 
 
 class RegionBulkEditView(generic.BulkEditView):
-    queryset = Region.objects.add_related_count(
-        Region.objects.all(),
-        Site,
-        'region',
-        'site_count',
-        cumulative=True
-    )
+    queryset = Region.objects.all()
+    # queryset = Region.objects.add_related_count(
+    #     Region.objects.all(),
+    #     Site,
+    #     'region',
+    #     'site_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.RegionFilterSet
     table = tables.RegionTable
     form = forms.RegionBulkEditForm
 
 
 class RegionBulkDeleteView(generic.BulkDeleteView):
-    queryset = Region.objects.add_related_count(
-        Region.objects.all(),
-        Site,
-        'region',
-        'site_count',
-        cumulative=True
-    )
+    queryset = Region.objects.all()
+    # queryset = Region.objects.add_related_count(
+    #     Region.objects.all(),
+    #     Site,
+    #     'region',
+    #     'site_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.RegionFilterSet
     table = tables.RegionTable
 
@@ -278,13 +281,14 @@ class RegionContactsView(ObjectContactsView):
 #
 
 class SiteGroupListView(generic.ObjectListView):
-    queryset = SiteGroup.objects.add_related_count(
-        SiteGroup.objects.all(),
-        Site,
-        'group',
-        'site_count',
-        cumulative=True
-    )
+    queryset = SiteGroup.objects.all()
+    # queryset = SiteGroup.objects.add_related_count(
+    #     SiteGroup.objects.all(),
+    #     Site,
+    #     'group',
+    #     'site_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.SiteGroupFilterSet
     filterset_form = forms.SiteGroupFilterForm
     table = tables.SiteGroupTable
@@ -324,26 +328,28 @@ class SiteGroupBulkImportView(generic.BulkImportView):
 
 
 class SiteGroupBulkEditView(generic.BulkEditView):
-    queryset = SiteGroup.objects.add_related_count(
-        SiteGroup.objects.all(),
-        Site,
-        'group',
-        'site_count',
-        cumulative=True
-    )
+    queryset = SiteGroup.objects.all()
+    # queryset = SiteGroup.objects.add_related_count(
+    #     SiteGroup.objects.all(),
+    #     Site,
+    #     'group',
+    #     'site_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.SiteGroupFilterSet
     table = tables.SiteGroupTable
     form = forms.SiteGroupBulkEditForm
 
 
 class SiteGroupBulkDeleteView(generic.BulkDeleteView):
-    queryset = SiteGroup.objects.add_related_count(
-        SiteGroup.objects.all(),
-        Site,
-        'group',
-        'site_count',
-        cumulative=True
-    )
+    queryset = SiteGroup.objects.all()
+    # queryset = SiteGroup.objects.add_related_count(
+    #     SiteGroup.objects.all(),
+    #     Site,
+    #     'group',
+    #     'site_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.SiteGroupFilterSet
     table = tables.SiteGroupTable
 
@@ -388,20 +394,21 @@ class SiteView(generic.ObjectView):
             (Circuit.objects.restrict(request.user, 'view').filter(terminations__site=instance).distinct(), 'site_id'),
         )
 
-        locations = Location.objects.add_related_count(
-            Location.objects.all(),
-            Rack,
-            'location',
-            'rack_count',
-            cumulative=True
-        )
-        locations = Location.objects.add_related_count(
-            locations,
-            Device,
-            'location',
-            'device_count',
-            cumulative=True
-        ).restrict(request.user, 'view').filter(site=instance)
+        locations = Location.objects.all().restrict(request.user, 'view').filter(site=instance)
+        # locations = Location.objects.add_related_count(
+        #     Location.objects.all(),
+        #     Rack,
+        #     'location',
+        #     'rack_count',
+        #     cumulative=True
+        # )
+        # locations = Location.objects.add_related_count(
+        #     locations,
+        #     Device,
+        #     'location',
+        #     'device_count',
+        #     cumulative=True
+        # ).restrict(request.user, 'view').filter(site=instance)
 
         nonracked_devices = Device.objects.filter(
             site=instance,
@@ -456,19 +463,20 @@ class SiteContactsView(ObjectContactsView):
 #
 
 class LocationListView(generic.ObjectListView):
-    queryset = Location.objects.add_related_count(
-        Location.objects.add_related_count(
-            Location.objects.all(),
-            Device,
-            'location',
-            'device_count',
-            cumulative=True
-        ),
-        Rack,
-        'location',
-        'rack_count',
-        cumulative=True
-    )
+    queryset = Location.objects.all()
+    # queryset = Location.objects.add_related_count(
+    #     Location.objects.add_related_count(
+    #         Location.objects.all(),
+    #         Device,
+    #         'location',
+    #         'device_count',
+    #         cumulative=True
+    #     ),
+    #     Rack,
+    #     'location',
+    #     'rack_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.LocationFilterSet
     filterset_form = forms.LocationFilterForm
     table = tables.LocationTable
@@ -515,26 +523,28 @@ class LocationBulkImportView(generic.BulkImportView):
 
 
 class LocationBulkEditView(generic.BulkEditView):
-    queryset = Location.objects.add_related_count(
-        Location.objects.all(),
-        Rack,
-        'location',
-        'rack_count',
-        cumulative=True
-    ).prefetch_related('site')
+    queryset = Location.objects.all()
+    # queryset = Location.objects.add_related_count(
+    #     Location.objects.all(),
+    #     Rack,
+    #     'location',
+    #     'rack_count',
+    #     cumulative=True
+    # ).prefetch_related('site')
     filterset = filtersets.LocationFilterSet
     table = tables.LocationTable
     form = forms.LocationBulkEditForm
 
 
 class LocationBulkDeleteView(generic.BulkDeleteView):
-    queryset = Location.objects.add_related_count(
-        Location.objects.all(),
-        Rack,
-        'location',
-        'rack_count',
-        cumulative=True
-    ).prefetch_related('site')
+    queryset = Location.objects.all()
+    # queryset = Location.objects.add_related_count(
+    #     Location.objects.all(),
+    #     Rack,
+    #     'location',
+    #     'rack_count',
+    #     cumulative=True
+    # ).prefetch_related('site')
     filterset = filtersets.LocationFilterSet
     table = tables.LocationTable
 

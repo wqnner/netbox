@@ -24,7 +24,7 @@ __all__ = [
 class NestedTenantGroupSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='tenancy-api:tenantgroup-detail')
     tenant_count = serializers.IntegerField(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = TenantGroup
@@ -49,7 +49,7 @@ class NestedTenantSerializer(WritableNestedSerializer):
 class NestedContactGroupSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='tenancy-api:contactgroup-detail')
     contact_count = serializers.IntegerField(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = ContactGroup

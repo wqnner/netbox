@@ -11,13 +11,14 @@ from .models import *
 #
 
 class WirelessLANGroupListView(generic.ObjectListView):
-    queryset = WirelessLANGroup.objects.add_related_count(
-        WirelessLANGroup.objects.all(),
-        WirelessLAN,
-        'group',
-        'wirelesslan_count',
-        cumulative=True
-    ).prefetch_related('tags')
+    queryset = WirelessLANGroup.objects.all().prefetch_related('tags')
+    # queryset = WirelessLANGroup.objects.add_related_count(
+    #     WirelessLANGroup.objects.all(),
+    #     WirelessLAN,
+    #     'group',
+    #     'wirelesslan_count',
+    #     cumulative=True
+    # ).prefetch_related('tags')
     filterset = filtersets.WirelessLANGroupFilterSet
     filterset_form = forms.WirelessLANGroupFilterForm
     table = tables.WirelessLANGroupTable
@@ -55,26 +56,28 @@ class WirelessLANGroupBulkImportView(generic.BulkImportView):
 
 
 class WirelessLANGroupBulkEditView(generic.BulkEditView):
-    queryset = WirelessLANGroup.objects.add_related_count(
-        WirelessLANGroup.objects.all(),
-        WirelessLAN,
-        'group',
-        'wirelesslan_count',
-        cumulative=True
-    )
+    queryset = WirelessLANGroup.objects.all()
+    # queryset = WirelessLANGroup.objects.add_related_count(
+    #     WirelessLANGroup.objects.all(),
+    #     WirelessLAN,
+    #     'group',
+    #     'wirelesslan_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.WirelessLANGroupFilterSet
     table = tables.WirelessLANGroupTable
     form = forms.WirelessLANGroupBulkEditForm
 
 
 class WirelessLANGroupBulkDeleteView(generic.BulkDeleteView):
-    queryset = WirelessLANGroup.objects.add_related_count(
-        WirelessLANGroup.objects.all(),
-        WirelessLAN,
-        'group',
-        'wirelesslan_count',
-        cumulative=True
-    )
+    queryset = WirelessLANGroup.objects.all()
+    # queryset = WirelessLANGroup.objects.add_related_count(
+    #     WirelessLANGroup.objects.all(),
+    #     WirelessLAN,
+    #     'group',
+    #     'wirelesslan_count',
+    #     cumulative=True
+    # )
     filterset = filtersets.WirelessLANGroupFilterSet
     table = tables.WirelessLANGroupTable
 

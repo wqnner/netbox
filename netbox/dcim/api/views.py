@@ -99,13 +99,14 @@ class PassThroughPortMixin(object):
 #
 
 class RegionViewSet(NetBoxModelViewSet):
-    queryset = Region.objects.add_related_count(
-        Region.objects.all(),
-        Site,
-        'region',
-        'site_count',
-        cumulative=True
-    ).prefetch_related('tags')
+    queryset = Region.objects.all().prefetch_related('tags')
+    # queryset = Region.objects.add_related_count(
+    #     Region.objects.all(),
+    #     Site,
+    #     'region',
+    #     'site_count',
+    #     cumulative=True
+    # ).prefetch_related('tags')
     serializer_class = serializers.RegionSerializer
     filterset_class = filtersets.RegionFilterSet
 
@@ -115,13 +116,14 @@ class RegionViewSet(NetBoxModelViewSet):
 #
 
 class SiteGroupViewSet(NetBoxModelViewSet):
-    queryset = SiteGroup.objects.add_related_count(
-        SiteGroup.objects.all(),
-        Site,
-        'group',
-        'site_count',
-        cumulative=True
-    ).prefetch_related('tags')
+    queryset = SiteGroup.objects.all().prefetch_related('tags')
+    # queryset = SiteGroup.objects.add_related_count(
+    #     SiteGroup.objects.all(),
+    #     Site,
+    #     'group',
+    #     'site_count',
+    #     cumulative=True
+    # ).prefetch_related('tags')
     serializer_class = serializers.SiteGroupSerializer
     filterset_class = filtersets.SiteGroupFilterSet
 
@@ -150,19 +152,20 @@ class SiteViewSet(NetBoxModelViewSet):
 #
 
 class LocationViewSet(NetBoxModelViewSet):
-    queryset = Location.objects.add_related_count(
-        Location.objects.add_related_count(
-            Location.objects.all(),
-            Device,
-            'location',
-            'device_count',
-            cumulative=True
-        ),
-        Rack,
-        'location',
-        'rack_count',
-        cumulative=True
-    ).prefetch_related('site', 'tags')
+    queryset = Location.objects.all().prefetch_related('site', 'tags')
+    # queryset = Location.objects.add_related_count(
+    #     Location.objects.add_related_count(
+    #         Location.objects.all(),
+    #         Device,
+    #         'location',
+    #         'device_count',
+    #         cumulative=True
+    #     ),
+    #     Rack,
+    #     'location',
+    #     'rack_count',
+    #     cumulative=True
+    # ).prefetch_related('site', 'tags')
     serializer_class = serializers.LocationSerializer
     filterset_class = filtersets.LocationFilterSet
 

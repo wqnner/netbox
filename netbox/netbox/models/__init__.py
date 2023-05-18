@@ -2,11 +2,11 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.validators import ValidationError
 from django.db import models
-from mptt.models import MPTTModel, TreeForeignKey
+from tree_queries.models import TreeNode
 
 from netbox.models.features import *
-from utilities.mptt import TreeManager
 from utilities.querysets import RestrictedQuerySet
+from utilities.tree_queries import TreeManager
 
 __all__ = (
     'ChangeLoggedModel',
@@ -103,19 +103,11 @@ class PrimaryModel(NetBoxModel):
         abstract = True
 
 
-class NestedGroupModel(CloningMixin, NetBoxFeatureSet, MPTTModel):
+class NestedGroupModel(CloningMixin, NetBoxFeatureSet, TreeNode):
     """
     Base model for objects which are used to form a hierarchy (regions, locations, etc.). These models nest
     recursively using MPTT. Within each parent, each child instance must have a unique name.
     """
-    parent = TreeForeignKey(
-        to='self',
-        on_delete=models.CASCADE,
-        related_name='children',
-        blank=True,
-        null=True,
-        db_index=True
-    )
     name = models.CharField(
         max_length=100
     )
@@ -131,9 +123,7 @@ class NestedGroupModel(CloningMixin, NetBoxFeatureSet, MPTTModel):
 
     class Meta:
         abstract = True
-
-    class MPTTMeta:
-        order_insertion_by = ('name',)
+        ordering = ("name",)
 
     def __str__(self):
         return self.name

@@ -24,13 +24,14 @@ class TenancyRootView(APIRootView):
 #
 
 class TenantGroupViewSet(NetBoxModelViewSet):
-    queryset = TenantGroup.objects.add_related_count(
-        TenantGroup.objects.all(),
-        Tenant,
-        'group',
-        'tenant_count',
-        cumulative=True
-    ).prefetch_related('tags')
+    queryset = TenantGroup.objects.all().prefetch_related('tags')
+    # queryset = TenantGroup.objects.add_related_count(
+    #     TenantGroup.objects.all(),
+    #     Tenant,
+    #     'group',
+    #     'tenant_count',
+    #     cumulative=True
+    # ).prefetch_related('tags')
     serializer_class = serializers.TenantGroupSerializer
     filterset_class = filtersets.TenantGroupFilterSet
 
@@ -59,13 +60,14 @@ class TenantViewSet(NetBoxModelViewSet):
 #
 
 class ContactGroupViewSet(NetBoxModelViewSet):
-    queryset = ContactGroup.objects.add_related_count(
-        ContactGroup.objects.all(),
-        Contact,
-        'group',
-        'contact_count',
-        cumulative=True
-    ).prefetch_related('tags')
+    queryset = ContactGroup.objects.all().prefetch_related('tags')
+    # queryset = ContactGroup.objects.add_related_count(
+    #     ContactGroup.objects.all(),
+    #     Contact,
+    #     'group',
+    #     'contact_count',
+    #     cumulative=True
+    # ).prefetch_related('tags')
     serializer_class = serializers.ContactGroupSerializer
     filterset_class = filtersets.ContactGroupFilterSet
 

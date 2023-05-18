@@ -26,9 +26,9 @@ django-filter
 # https://github.com/flavors/django-graphiql-debug-toolbar/blob/main/CHANGES.rst
 django-graphiql-debug-toolbar
 
-# Modified Preorder Tree Traversal (recursive nesting of objects)
-# https://github.com/django-mptt/django-mptt/blob/main/CHANGELOG.rst
-django-mptt
+# Adjacency-list trees for Django using recursive common table expressions.
+# https://github.com/matthiask/django-tree-queries/blob/main/CHANGELOG.rst
+django-tree-queries
 
 # Context managers for PostgreSQL advisory locks
 # https://github.com/Xof/django-pglocks/blob/master/CHANGES.txt

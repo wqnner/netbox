@@ -21,7 +21,7 @@ class NestedGroupModelSerializer(NetBoxModelSerializer):
     """
     Extends PrimaryModelSerializer to include MPTT support.
     """
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
 
 class BulkOperationSerializer(serializers.Serializer):

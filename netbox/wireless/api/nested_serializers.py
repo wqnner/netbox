@@ -17,7 +17,7 @@ __all__ = (
 class NestedWirelessLANGroupSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='wireless-api:wirelesslangroup-detail')
     wirelesslan_count = serializers.IntegerField(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = WirelessLANGroup

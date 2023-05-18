@@ -589,7 +589,7 @@ class InventoryItemTemplateSerializer(ValidatedModelSerializer):
         allow_null=True
     )
     component = serializers.SerializerMethodField(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = InventoryItemTemplate
@@ -1023,7 +1023,7 @@ class InventoryItemSerializer(NetBoxModelSerializer):
         allow_null=True
     )
     component = serializers.SerializerMethodField(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = InventoryItem

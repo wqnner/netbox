@@ -130,10 +130,11 @@ class ConfigContextModelQuerySet(RestrictedQuerySet):
             region_field = 'cluster__site__region'
             sitegroup_field = 'cluster__site__group'
 
+        """
         base_query.add(
             (Q(
                 regions__tree_id=OuterRef(f'{region_field}__tree_id'),
-                regions__level__lte=OuterRef(f'{region_field}__level'),
+                regions__tree_depth__lte=OuterRef(f'{region_field}__tree_depth'),
                 regions__lft__lte=OuterRef(f'{region_field}__lft'),
                 regions__rght__gte=OuterRef(f'{region_field}__rght'),
             ) | Q(regions=None)),
@@ -143,11 +144,12 @@ class ConfigContextModelQuerySet(RestrictedQuerySet):
         base_query.add(
             (Q(
                 site_groups__tree_id=OuterRef(f'{sitegroup_field}__tree_id'),
-                site_groups__level__lte=OuterRef(f'{sitegroup_field}__level'),
+                site_groups__tree_depth__lte=OuterRef(f'{sitegroup_field}__tree_depth'),
                 site_groups__lft__lte=OuterRef(f'{sitegroup_field}__lft'),
                 site_groups__rght__gte=OuterRef(f'{sitegroup_field}__rght'),
             ) | Q(site_groups=None)),
             Q.AND
         )
+        """
 
         return base_query

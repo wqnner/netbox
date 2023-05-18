@@ -60,7 +60,7 @@ __all__ = [
 class NestedRegionSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='dcim-api:region-detail')
     site_count = serializers.IntegerField(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = models.Region
@@ -73,7 +73,7 @@ class NestedRegionSerializer(WritableNestedSerializer):
 class NestedSiteGroupSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='dcim-api:sitegroup-detail')
     site_count = serializers.IntegerField(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = models.SiteGroup
@@ -98,7 +98,7 @@ class NestedSiteSerializer(WritableNestedSerializer):
 class NestedLocationSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='dcim-api:location-detail')
     rack_count = serializers.IntegerField(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = models.Location
@@ -258,7 +258,7 @@ class NestedDeviceBayTemplateSerializer(WritableNestedSerializer):
 
 class NestedInventoryItemTemplateSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='dcim-api:inventoryitemtemplate-detail')
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = models.InventoryItemTemplate
@@ -433,7 +433,7 @@ class NestedDeviceBaySerializer(WritableNestedSerializer):
 class NestedInventoryItemSerializer(WritableNestedSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='dcim-api:inventoryitem-detail')
     device = NestedDeviceSerializer(read_only=True)
-    _depth = serializers.IntegerField(source='level', read_only=True)
+    _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 
     class Meta:
         model = models.InventoryItem

@@ -8,7 +8,7 @@ from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from mptt.models import MPTTModel, TreeForeignKey
+from tree_queries.models import TreeNode
 
 from dcim.choices import *
 from dcim.constants import *
@@ -16,9 +16,9 @@ from dcim.fields import MACAddressField, WWNField
 from netbox.models import OrganizationalModel, NetBoxModel
 from utilities.choices import ColorChoices
 from utilities.fields import ColorField, NaturalOrderingField
-from utilities.mptt import TreeManager
 from utilities.ordering import naturalize_interface
 from utilities.query_functions import CollateAsChar
+from utilities.tree_queries import TreeManager
 from wireless.choices import *
 from wireless.utils import get_channel_attr
 
@@ -1064,19 +1064,11 @@ class InventoryItemRole(OrganizationalModel):
         return reverse('dcim:inventoryitemrole', args=[self.pk])
 
 
-class InventoryItem(MPTTModel, ComponentModel):
+class InventoryItem(TreeNode, ComponentModel):
     """
     An InventoryItem represents a serialized piece of hardware within a Device, such as a line card or power supply.
     InventoryItems are used only for inventory purposes.
     """
-    parent = TreeForeignKey(
-        to='self',
-        on_delete=models.CASCADE,
-        related_name='child_items',
-        blank=True,
-        null=True,
-        db_index=True
-    )
     component_type = models.ForeignKey(
         to=ContentType,
         limit_choices_to=MODULAR_COMPONENT_MODELS,

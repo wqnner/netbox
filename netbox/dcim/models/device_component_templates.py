@@ -4,14 +4,14 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext as _
-from mptt.models import MPTTModel, TreeForeignKey
+from tree_queries.models import TreeNode
 
 from dcim.choices import *
 from dcim.constants import *
 from netbox.models import ChangeLoggedModel
 from utilities.fields import ColorField, NaturalOrderingField
-from utilities.mptt import TreeManager
 from utilities.ordering import naturalize_interface
+from utilities.tree_queries import TreeManager
 from .device_components import (
     ConsolePort, ConsoleServerPort, DeviceBay, FrontPort, Interface, InventoryItem, ModuleBay, PowerOutlet, PowerPort,
     RearPort,
@@ -618,18 +618,10 @@ class DeviceBayTemplate(ComponentTemplateModel):
         }
 
 
-class InventoryItemTemplate(MPTTModel, ComponentTemplateModel):
+class InventoryItemTemplate(TreeNode, ComponentTemplateModel):
     """
     A template for an InventoryItem to be created for a new parent Device.
     """
-    parent = TreeForeignKey(
-        to='self',
-        on_delete=models.CASCADE,
-        related_name='child_items',
-        blank=True,
-        null=True,
-        db_index=True
-    )
     component_type = models.ForeignKey(
         to=ContentType,
         limit_choices_to=MODULAR_COMPONENT_TEMPLATE_MODELS,
