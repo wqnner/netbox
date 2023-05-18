@@ -116,7 +116,7 @@ class TreeNodeMultipleChoiceFilter(django_filters.ModelMultipleChoiceFilter):
         return super().get_filter_predicate(v)
 
     def filter(self, qs, value):
-        value = [node.get_descendants(include_self=True) if not isinstance(node, str) else node for node in value]
+        value = [node.descendants(include_self=True) if not isinstance(node, str) else node for node in value]
         return super().filter(qs, value)
 
 

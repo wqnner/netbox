@@ -106,7 +106,7 @@ class PrimaryModel(NetBoxModel):
 class NestedGroupModel(CloningMixin, NetBoxFeatureSet, TreeNode):
     """
     Base model for objects which are used to form a hierarchy (regions, locations, etc.). These models nest
-    recursively using MPTT. Within each parent, each child instance must have a unique name.
+    recursively using tree-queries. Within each parent, each child instance must have a unique name.
     """
     name = models.CharField(
         max_length=100
@@ -127,15 +127,6 @@ class NestedGroupModel(CloningMixin, NetBoxFeatureSet, TreeNode):
 
     def __str__(self):
         return self.name
-
-    def clean(self):
-        super().clean()
-
-        # An MPTT model cannot be its own parent
-        if self.pk and self.parent and self.parent in self.get_descendants(include_self=True):
-            raise ValidationError({
-                "parent": f"Cannot assign self or child {self._meta.verbose_name} as parent."
-            })
 
 
 class OrganizationalModel(NetBoxFeatureSet, models.Model):

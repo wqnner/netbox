@@ -69,7 +69,7 @@ class Region(NestedGroupModel):
     def get_site_count(self):
         return Site.objects.filter(
             Q(region=self) |
-            Q(region__in=self.get_descendants())
+            Q(region__in=self.descendants())
         ).count()
 
 
@@ -124,7 +124,7 @@ class SiteGroup(NestedGroupModel):
     def get_site_count(self):
         return Site.objects.filter(
             Q(group=self) |
-            Q(group__in=self.get_descendants())
+            Q(group__in=self.descendants())
         ).count()
 
 

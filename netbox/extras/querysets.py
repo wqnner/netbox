@@ -33,11 +33,11 @@ class ConfigContextQuerySet(RestrictedQuerySet):
 
         # Match against the directly assigned region as well as any parent regions.
         region = getattr(obj.site, 'region', None)
-        regions = region.get_ancestors(include_self=True) if region else []
+        regions = region.ancestors(include_self=True) if region else []
 
         # Match against the directly assigned site group as well as any parent site groups.
         sitegroup = getattr(obj.site, 'group', None)
-        sitegroups = sitegroup.get_ancestors(include_self=True) if sitegroup else []
+        sitegroups = sitegroup.ancestors(include_self=True) if sitegroup else []
 
         queryset = self.filter(
             Q(regions__in=regions) | Q(regions=None),

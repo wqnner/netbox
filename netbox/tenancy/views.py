@@ -60,7 +60,7 @@ class TenantGroupView(generic.ObjectView):
     queryset = TenantGroup.objects.all()
 
     def get_extra_context(self, request, instance):
-        groups = instance.get_descendants(include_self=True)
+        groups = instance.descendants(include_self=True)
         related_models = (
             (Tenant.objects.restrict(request.user, 'view').filter(group__in=groups), 'group_id'),
         )
@@ -219,7 +219,7 @@ class ContactGroupView(generic.ObjectView):
     queryset = ContactGroup.objects.all()
 
     def get_extra_context(self, request, instance):
-        groups = instance.get_descendants(include_self=True)
+        groups = instance.descendants(include_self=True)
         related_models = (
             (Contact.objects.restrict(request.user, 'view').filter(group__in=groups), 'group_id'),
         )

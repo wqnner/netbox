@@ -43,12 +43,12 @@ class VLANQuerySet(RestrictedQuerySet):
         if device.site.region:
             q |= Q(
                 scope_type=ContentType.objects.get_by_natural_key('dcim', 'region'),
-                scope_id__in=device.site.region.get_ancestors(include_self=True)
+                scope_id__in=device.site.region.ancestors(include_self=True)
             )
         if device.site.group:
             q |= Q(
                 scope_type=ContentType.objects.get_by_natural_key('dcim', 'sitegroup'),
-                scope_id__in=device.site.group.get_ancestors(include_self=True)
+                scope_id__in=device.site.group.ancestors(include_self=True)
             )
         q |= Q(
             scope_type=ContentType.objects.get_by_natural_key('dcim', 'site'),
@@ -57,7 +57,7 @@ class VLANQuerySet(RestrictedQuerySet):
         if device.location:
             q |= Q(
                 scope_type=ContentType.objects.get_by_natural_key('dcim', 'location'),
-                scope_id__in=device.location.get_ancestors(include_self=True)
+                scope_id__in=device.location.ancestors(include_self=True)
             )
         if device.rack:
             q |= Q(
@@ -102,12 +102,12 @@ class VLANQuerySet(RestrictedQuerySet):
             if site.region:
                 q |= Q(
                     scope_type=ContentType.objects.get_by_natural_key('dcim', 'region'),
-                    scope_id__in=site.region.get_ancestors(include_self=True)
+                    scope_id__in=site.region.ancestors(include_self=True)
                 )
             if site.group:
                 q |= Q(
                     scope_type=ContentType.objects.get_by_natural_key('dcim', 'sitegroup'),
-                    scope_id__in=site.group.get_ancestors(include_self=True)
+                    scope_id__in=site.group.ancestors(include_self=True)
                 )
         vlan_groups = VLANGroup.objects.filter(q)
 

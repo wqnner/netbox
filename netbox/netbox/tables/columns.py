@@ -538,7 +538,7 @@ class MPTTColumn(tables.TemplateColumn):
     template_code = """
         {% load helpers %}
         {% if not table.order_by %}
-          {% for i in record.level|as_range %}<i class="mdi mdi-circle-small"></i>{% endfor %}
+          {% for i in record.tree_depth|as_range %}<i class="mdi mdi-circle-small"></i>{% endfor %}
         {% endif %}
         <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     """

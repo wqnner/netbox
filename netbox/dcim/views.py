@@ -198,7 +198,7 @@ class PathTraceView(generic.ObjectView):
 #
 
 class RegionListView(generic.ObjectListView):
-    queryset = Region.objects.all()
+    queryset = Region.objects.all().order_siblings_by("name")
     # queryset = Region.objects.add_related_count(
     #     Region.objects.all(),
     #     Site,
@@ -216,7 +216,7 @@ class RegionView(generic.ObjectView):
     queryset = Region.objects.all()
 
     def get_extra_context(self, request, instance):
-        regions = instance.get_descendants(include_self=True)
+        regions = instance.descendants(include_self=True)
         related_models = (
             (Site.objects.restrict(request.user, 'view').filter(region__in=regions), 'region_id'),
             (Location.objects.restrict(request.user, 'view').filter(site__region__in=regions), 'region_id'),
@@ -299,7 +299,7 @@ class SiteGroupView(generic.ObjectView):
     queryset = SiteGroup.objects.all()
 
     def get_extra_context(self, request, instance):
-        groups = instance.get_descendants(include_self=True)
+        groups = instance.descendants(include_self=True)
         related_models = (
             (Site.objects.restrict(request.user, 'view').filter(group__in=groups), 'group_id'),
             (Location.objects.restrict(request.user, 'view').filter(site__group__in=groups), 'site_group_id'),
@@ -487,7 +487,7 @@ class LocationView(generic.ObjectView):
     queryset = Location.objects.all()
 
     def get_extra_context(self, request, instance):
-        locations = instance.get_descendants(include_self=True)
+        locations = instance.descendants(include_self=True)
         related_models = (
             (Rack.objects.restrict(request.user, 'view').filter(location__in=locations), 'location_id'),
             (Device.objects.restrict(request.user, 'view').filter(location__in=locations), 'location_id'),
