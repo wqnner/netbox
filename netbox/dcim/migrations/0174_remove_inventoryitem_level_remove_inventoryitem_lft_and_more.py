@@ -145,4 +145,8 @@ class Migration(migrations.Migration):
                 to='dcim.sitegroup',
             ),
         ),
+        migrations.AlterModelOptions(
+            name='inventoryitem',
+            options={'ordering': ('_name',)},
+        ),
     ]
