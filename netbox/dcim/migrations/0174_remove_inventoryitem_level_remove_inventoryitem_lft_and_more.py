@@ -149,4 +149,12 @@ class Migration(migrations.Migration):
             name='inventoryitem',
             options={'ordering': ('_name',)},
         ),
+        migrations.AlterModelOptions(
+            name='inventoryitemtemplate',
+            options={'ordering': ('_name',)},
+        ),
+        migrations.AlterModelOptions(
+            name='location',
+            options={'ordering': ('name',)},
+        ),
     ]

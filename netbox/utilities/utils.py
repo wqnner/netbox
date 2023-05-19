@@ -155,8 +155,8 @@ def serialize_object(obj, resolve_tags=True, extra=None):
 
     # Exclude any TreeNode fields
     if issubclass(obj.__class__, TreeNode):
-        for field in ['level', 'lft', 'rght', 'tree_id']:
-            data.pop(field)
+        for field in ['tree_depth', 'tree_path', 'tree_ordering']:
+            data.pop(field, None)
 
     # Include custom_field_data as "custom_fields"
     if hasattr(obj, 'custom_field_data'):

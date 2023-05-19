@@ -1128,7 +1128,6 @@ class InventoryItem(TreeNode, ComponentModel):
     clone_fields = ('device', 'parent', 'role', 'manufacturer', 'part_id',)
 
     class Meta:
-        # ordering = ('device__id', 'parent__id', '_name')
         ordering = ('_name', )
         constraints = (
             models.UniqueConstraint(

@@ -145,7 +145,7 @@
               {% for location in locations %}
                 <tr>
                   <td>
-                    {% for i in location.level|as_range %}<i class="mdi mdi-circle-small"></i>{% endfor %}
+                    {% for i in location.tree_depth|as_range %}<i class="mdi mdi-circle-small"></i>{% endfor %}
                     {{ location|linkify }}
                   </td>
                   <td>

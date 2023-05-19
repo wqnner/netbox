@@ -663,7 +663,7 @@ class InventoryItemTemplate(TreeNode, ComponentTemplateModel):
     component_model = InventoryItem
 
     class Meta:
-        ordering = ('device_type__id', 'parent__id', '_name')
+        ordering = ('_name', )
         constraints = (
             models.UniqueConstraint(
                 fields=('device_type', 'parent', 'name'),

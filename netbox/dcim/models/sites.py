@@ -294,7 +294,7 @@ class Location(NestedGroupModel):
     )
 
     class Meta:
-        ordering = ['site', 'name']
+        ordering = ('name', )
         constraints = (
             models.UniqueConstraint(
                 fields=('site', 'parent', 'name'),

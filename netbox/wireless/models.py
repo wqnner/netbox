@@ -54,7 +54,7 @@ class WirelessLANGroup(NestedGroupModel):
     )
 
     class Meta:
-        ordering = ('name', 'pk')
+        ordering = ('name', )
         constraints = (
             models.UniqueConstraint(
                 fields=('parent', 'name'),

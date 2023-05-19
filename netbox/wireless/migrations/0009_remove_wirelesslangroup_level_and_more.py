@@ -37,4 +37,8 @@ class Migration(migrations.Migration):
                 to='wireless.wirelesslangroup',
             ),
         ),
+        migrations.AlterModelOptions(
+            name='wirelesslangroup',
+            options={'ordering': ('name',), 'verbose_name': 'Wireless LAN Group'},
+        ),
     ]
