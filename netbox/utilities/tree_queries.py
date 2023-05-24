@@ -98,7 +98,6 @@ class TreeManager(Manager.from_queryset(TreeQuerySet), TreeManager_):
                 "table1": rel_model._meta.db_table,
                 "table2": rel_model._meta.get_field(rel_field).remote_field.model._meta.db_table,
                 "rel_field": rel_field,
-                "count_attr": count_attr,
             }
 
             return queryset.annotate(**{count_attr: RawSQL(SQL.format(**params), {})})
