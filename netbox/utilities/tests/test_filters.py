@@ -2,7 +2,7 @@ import django_filters
 from django.conf import settings
 from django.db import models
 from django.test import TestCase
-from mptt.fields import TreeForeignKey
+from tree_queries.fields import TreeNodeForeignKey
 from taggit.managers import TaggableManager
 
 from dcim.choices import *
@@ -94,7 +94,7 @@ class DummyModel(models.Model):
     integerfield = models.IntegerField()
     macaddressfield = MACAddressField()
     timefield = models.TimeField()
-    treeforeignkeyfield = TreeForeignKey(
+    treeforeignkeyfield = TreeNodeForeignKey(
         to='self',
         on_delete=models.CASCADE
     )

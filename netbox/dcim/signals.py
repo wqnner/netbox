@@ -22,8 +22,8 @@ def handle_location_site_change(instance, created, **kwargs):
     object instead of calling update() on the QuerySet to ensure the proper change records get created for each.
     """
     if not created:
-        instance.descendants().update(site=instance.site)
         locations = instance.descendants(include_self=True).values_list('pk', flat=True)
+        Location.objects.filter(pk__in=locations).update(site=instance.site)
         Rack.objects.filter(location__in=locations).update(site=instance.site)
         Device.objects.filter(location__in=locations).update(site=instance.site)
         PowerPanel.objects.filter(location__in=locations).update(site=instance.site)
