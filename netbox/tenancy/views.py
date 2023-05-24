@@ -42,14 +42,13 @@ class ObjectContactsView(generic.ObjectChildrenView):
 
 
 class TenantGroupListView(generic.ObjectListView):
-    queryset = TenantGroup.objects.all()
-    # queryset = TenantGroup.objects.add_related_count(
-    #     TenantGroup.objects.all(),
-    #     Tenant,
-    #     'group',
-    #     'tenant_count',
-    #     cumulative=True
-    # )
+    queryset = TenantGroup.objects.add_related_count(
+        TenantGroup.objects.all(),
+        Tenant,
+        'group',
+        'tenant_count',
+        cumulative=True
+    )
     filterset = filtersets.TenantGroupFilterSet
     filterset_form = forms.TenantGroupFilterForm
     table = tables.TenantGroupTable
@@ -87,28 +86,26 @@ class TenantGroupBulkImportView(generic.BulkImportView):
 
 
 class TenantGroupBulkEditView(generic.BulkEditView):
-    queryset = TenantGroup.objects.all()
-    # queryset = TenantGroup.objects.add_related_count(
-    #     TenantGroup.objects.all(),
-    #     Tenant,
-    #     'group',
-    #     'tenant_count',
-    #     cumulative=True
-    # )
+    queryset = TenantGroup.objects.add_related_count(
+        TenantGroup.objects.all(),
+        Tenant,
+        'group',
+        'tenant_count',
+        cumulative=True
+    )
     filterset = filtersets.TenantGroupFilterSet
     table = tables.TenantGroupTable
     form = forms.TenantGroupBulkEditForm
 
 
 class TenantGroupBulkDeleteView(generic.BulkDeleteView):
-    queryset = TenantGroup.objects.all()
-    # queryset = TenantGroup.objects.add_related_count(
-    #     TenantGroup.objects.all(),
-    #     Tenant,
-    #     'group',
-    #     'tenant_count',
-    #     cumulative=True
-    # )
+    queryset = TenantGroup.objects.add_related_count(
+        TenantGroup.objects.all(),
+        Tenant,
+        'group',
+        'tenant_count',
+        cumulative=True
+    )
     filterset = filtersets.TenantGroupFilterSet
     table = tables.TenantGroupTable
 
@@ -201,14 +198,13 @@ class TenantContactsView(ObjectContactsView):
 #
 
 class ContactGroupListView(generic.ObjectListView):
-    queryset = ContactGroup.objects.all()
-    # queryset = ContactGroup.objects.add_related_count(
-    #     ContactGroup.objects.all(),
-    #     Contact,
-    #     'group',
-    #     'contact_count',
-    #     cumulative=True
-    # )
+    queryset = ContactGroup.objects.add_related_count(
+        ContactGroup.objects.all(),
+        Contact,
+        'group',
+        'contact_count',
+        cumulative=True
+    )
     filterset = filtersets.ContactGroupFilterSet
     filterset_form = forms.ContactGroupFilterForm
     table = tables.ContactGroupTable
@@ -246,28 +242,26 @@ class ContactGroupBulkImportView(generic.BulkImportView):
 
 
 class ContactGroupBulkEditView(generic.BulkEditView):
-    queryset = ContactGroup.objects.all()
-    # queryset = ContactGroup.objects.add_related_count(
-    #     ContactGroup.objects.all(),
-    #     Contact,
-    #     'group',
-    #     'contact_count',
-    #     cumulative=True
-    # )
+    queryset = ContactGroup.objects.add_related_count(
+        ContactGroup.objects.all(),
+        Contact,
+        'group',
+        'contact_count',
+        cumulative=True
+    )
     filterset = filtersets.ContactGroupFilterSet
     table = tables.ContactGroupTable
     form = forms.ContactGroupBulkEditForm
 
 
 class ContactGroupBulkDeleteView(generic.BulkDeleteView):
-    queryset = ContactGroup.objects.all()
-    # queryset = ContactGroup.objects.add_related_count(
-    #     ContactGroup.objects.all(),
-    #     Contact,
-    #     'group',
-    #     'contact_count',
-    #     cumulative=True
-    # )
+    queryset = ContactGroup.objects.add_related_count(
+        ContactGroup.objects.all(),
+        Contact,
+        'group',
+        'contact_count',
+        cumulative=True
+    )
     filterset = filtersets.ContactGroupFilterSet
     table = tables.ContactGroupTable
 
