@@ -13,7 +13,7 @@ __all__ = (
 
 
 class ContactGroupTable(NetBoxTable):
-    name = columns.MPTTColumn(
+    name = columns.TreeColumn(
         linkify=True
     )
     contact_count = columns.LinkedCountColumn(

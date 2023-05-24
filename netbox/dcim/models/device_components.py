@@ -1157,7 +1157,7 @@ class InventoryItem(TreeNode, ComponentModel):
                 })
 
             # Prevent moving InventoryItems with children
-            first_child = self.get_children().first()
+            first_child = self.children.first()
             if first_child and first_child.device != self.device:
                 raise ValidationError("Cannot move an inventory item with dependent children")
 

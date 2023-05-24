@@ -866,7 +866,7 @@ class Device(PrimaryModel, ConfigContextModel):
             self._instantiate_components(self.device_type.frontporttemplates.all())
             self._instantiate_components(self.device_type.modulebaytemplates.all())
             self._instantiate_components(self.device_type.devicebaytemplates.all())
-            # Disable bulk_create to accommodate MPTT
+            # Disable bulk_create to accommodate django-tree-queries
             self._instantiate_components(self.device_type.inventoryitemtemplates.all(), bulk_create=False)
             # Interface bridges have to be set after interface instantiation
             update_interface_bridges(self, self.device_type.interfacetemplates.all())

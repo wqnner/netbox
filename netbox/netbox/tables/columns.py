@@ -33,7 +33,7 @@ __all__ = (
     'LinkedCountColumn',
     'MarkdownColumn',
     'ManyToManyColumn',
-    'MPTTColumn',
+    'TreeColumn',
     'TagColumn',
     'TemplateColumn',
     'ToggleColumn',
@@ -531,9 +531,9 @@ class CustomLinkColumn(tables.Column):
         return None
 
 
-class MPTTColumn(tables.TemplateColumn):
+class TreeColumn(tables.TemplateColumn):
     """
-    Display a nested hierarchy for MPTT-enabled models.
+    Display a nested hierarchy for Tree-enabled models.
     """
     template_code = """
         {% load helpers %}

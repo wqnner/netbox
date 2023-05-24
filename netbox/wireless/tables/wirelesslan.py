@@ -13,7 +13,7 @@ __all__ = (
 
 
 class WirelessLANGroupTable(NetBoxTable):
-    name = columns.MPTTColumn(
+    name = columns.TreeColumn(
         linkify=True
     )
     wirelesslan_count = columns.LinkedCountColumn(

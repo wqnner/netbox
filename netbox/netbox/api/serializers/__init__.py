@@ -19,7 +19,7 @@ class NetBoxModelSerializer(TaggableModelSerializer, CustomFieldModelSerializer,
 
 class NestedGroupModelSerializer(NetBoxModelSerializer):
     """
-    Extends PrimaryModelSerializer to include MPTT support.
+    Extends PrimaryModelSerializer to include Tree support.
     """
     _depth = serializers.IntegerField(source='tree_depth', read_only=True)
 

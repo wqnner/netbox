@@ -19,7 +19,7 @@ __all__ = (
 #
 
 class RegionTable(ContactsColumnMixin, NetBoxTable):
-    name = columns.MPTTColumn(
+    name = columns.TreeColumn(
         linkify=True
     )
     site_count = columns.LinkedCountColumn(
@@ -45,7 +45,7 @@ class RegionTable(ContactsColumnMixin, NetBoxTable):
 #
 
 class SiteGroupTable(ContactsColumnMixin, NetBoxTable):
-    name = columns.MPTTColumn(
+    name = columns.TreeColumn(
         linkify=True
     )
     site_count = columns.LinkedCountColumn(
@@ -111,7 +111,7 @@ class SiteTable(TenancyColumnsMixin, ContactsColumnMixin, NetBoxTable):
 #
 
 class LocationTable(TenancyColumnsMixin, ContactsColumnMixin, NetBoxTable):
-    name = columns.MPTTColumn(
+    name = columns.TreeColumn(
         linkify=True
     )
     site = tables.Column(

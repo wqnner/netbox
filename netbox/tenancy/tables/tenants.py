@@ -11,7 +11,7 @@ __all__ = (
 
 
 class TenantGroupTable(NetBoxTable):
-    name = columns.MPTTColumn(
+    name = columns.TreeColumn(
         linkify=True
     )
     tenant_count = columns.LinkedCountColumn(

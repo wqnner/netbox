@@ -418,7 +418,7 @@ class APIViewTestCases:
             obj_perm.object_types.add(ContentType.objects.get_for_model(self.model))
 
             # Target the three most recently created objects to avoid triggering recursive deletions
-            # (e.g. with MPTT objects)
+            # (e.g. with django-tree-queries objects)
             id_list = list(self._get_queryset().order_by('-id').values_list('id', flat=True)[:3])
             self.assertEqual(len(id_list), 3, "Insufficient number of objects to test bulk deletion")
             data = [{"id": id} for id in id_list]
