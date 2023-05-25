@@ -30,6 +30,10 @@ django-graphiql-debug-toolbar
 # https://github.com/matthiask/django-tree-queries/blob/main/CHANGELOG.rst
 django-tree-queries
 
+# Modified Preorder Tree Traversal (recursive nesting of objects)
+# https://github.com/django-mptt/django-mptt/blob/main/CHANGELOG.rst
+django-mptt
+
 # Context managers for PostgreSQL advisory locks
 # https://github.com/Xof/django-pglocks/blob/master/CHANGES.txt
 django-pglocks
