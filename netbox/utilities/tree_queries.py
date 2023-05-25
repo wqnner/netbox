@@ -16,7 +16,11 @@ class TreeQuerySet(TreeQuerySet_, RestrictedQuerySet):
     Mate django-tree-queries TreeQuerySet with our RestrictedQuerySet for permissions enforcement.
     """
 
-    pass
+    def without_tree_fields(self):
+        """
+        Requests no tree fields on this queryset
+        """
+        return self.with_tree_fields(tree_fields=False)
 
 
 class TreeManager(Manager.from_queryset(TreeQuerySet), TreeManager_):
@@ -24,7 +28,7 @@ class TreeManager(Manager.from_queryset(TreeQuerySet), TreeManager_):
     Extend django-tree-queries TreeManager to incorporate RestrictedQuerySet().
     """
 
-    _with_tree_fields = False
+    _with_tree_fields = True
 
     def add_related_count(
         self,

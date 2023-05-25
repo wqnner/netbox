@@ -16,7 +16,7 @@ from users.models import ObjectPermission, Token
 from utilities.api import get_graphql_type_for_model
 from .base import ModelTestCase
 from .utils import disable_warnings
-
+from utilities.tree_queries import TreeQuerySet
 from ipam.graphql.types import IPAddressFamilyType
 
 
@@ -419,7 +419,7 @@ class APIViewTestCases:
 
             # Target the three most recently created objects to avoid triggering recursive deletions
             # (e.g. with django-tree-queries objects)
-            id_list = list(self._get_queryset().order_by('-id').values_list('id', flat=True)[:3])
+            id_list = list(self._get_queryset(with_tree_fields=False).order_by('-id').values_list('id', flat=True)[:3])
             self.assertEqual(len(id_list), 3, "Insufficient number of objects to test bulk deletion")
             data = [{"id": id} for id in id_list]
 

@@ -12,6 +12,7 @@ from taggit.managers import TaggableManager
 
 from users.models import ObjectPermission
 from utilities.permissions import resolve_permission_ct
+from utilities.tree_queries import TreeQuerySet
 from utilities.utils import content_type_identifier
 from .utils import extract_form_failures
 
@@ -77,10 +78,13 @@ class ModelTestCase(TestCase):
     """
     model = None
 
-    def _get_queryset(self):
+    def _get_queryset(self, with_tree_fields=True):
         """
         Return a base queryset suitable for use in test methods.
         """
+        if not with_tree_fields and isinstance(self._get_queryset(), TreeQuerySet):
+            return self.model.objects.all().without_tree_fields()
+
         return self.model.objects.all()
 
     def prepare_instance(self, instance):
