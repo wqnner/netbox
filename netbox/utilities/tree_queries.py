@@ -24,7 +24,7 @@ class TreeManager(Manager.from_queryset(TreeQuerySet), TreeManager_):
     Extend django-tree-queries TreeManager to incorporate RestrictedQuerySet().
     """
 
-    _with_tree_fields = True
+    _with_tree_fields = False
 
     def add_related_count(
         self,
@@ -100,7 +100,7 @@ class TreeManager(Manager.from_queryset(TreeQuerySet), TreeManager_):
                 "rel_field": rel_field,
             }
 
-            return queryset.annotate(**{count_attr: RawSQL(SQL.format(**params), {})})
+            return queryset.with_tree_fields().annotate(**{count_attr: RawSQL(SQL.format(**params), {})})
         else:
             current_rel_model = rel_model
             for rel_field_part in rel_field.split("__"):
@@ -117,4 +117,4 @@ class TreeManager(Manager.from_queryset(TreeQuerySet), TreeManager_):
                 rel_field: OuterRef(field_name),
             }
         subquery = rel_model.objects.filter(**subquery_filters, **extra_filters).values("pk")
-        return queryset.annotate(**{count_attr: SQCount(subquery)})
+        return queryset.with_tree_fields().annotate(**{count_attr: SQCount(subquery)})
