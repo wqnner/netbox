@@ -36,7 +36,7 @@ def get_device_name(device):
     else:
         name = str(device.device_type)
     if device.devicebay_count:
-        name += ' ({}/{})'.format(device.children.count(), device.devicebay_count)
+        name += ' ({}/{})'.format(device.get_children().count(), device.devicebay_count)
 
     return name
 
