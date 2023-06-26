@@ -13,10 +13,8 @@ django-rich==1.6.0
 django-rq==2.8.1
 django-tables2==2.5.3
 django-taggit==4.0.0
-<<<<<<< HEAD
-django-timezone-field==5.0
-django-tree-queries==0.14.0
 django-timezone-field==5.1
+django-tree-queries==0.14.0
 djangorestframework==3.14.0
 drf-spectacular==0.26.2
 drf-spectacular-sidecar==2023.6.1
