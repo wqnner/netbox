@@ -134,6 +134,10 @@ class Migration(migrations.Migration):
                 to='dcim.region',
             ),
         ),
+        migrations.AlterModelOptions(
+            name='region',
+            options={'ordering': ('name',)},
+        ),
         migrations.AlterField(
             model_name='sitegroup',
             name='parent',

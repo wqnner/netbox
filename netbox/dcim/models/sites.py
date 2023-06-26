@@ -40,6 +40,7 @@ class Region(NestedGroupModel):
     )
 
     class Meta:
+        ordering = ('name',)
         constraints = (
             models.UniqueConstraint(
                 fields=('parent', 'name'),
