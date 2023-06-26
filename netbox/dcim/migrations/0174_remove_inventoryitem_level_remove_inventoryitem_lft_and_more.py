@@ -6,7 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('dcim', '0173_remove_napalm_fields'),
+        ('dcim', '0174_rack_starting_unit'),
     ]
 
     operations = [
