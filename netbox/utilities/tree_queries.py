@@ -68,33 +68,11 @@ class TreeManager(Manager.from_queryset(TreeQuerySet), TreeManager_):
         """
         if cumulative:
             SQL = """
-            WITH recursive __tree ( "tree_depth", "tree_path", "tree_pk" ) AS
-            (
-                  SELECT 0             AS tree_depth,
-                         array[T1.id]  AS tree_path,
-                         T1."id"
-                   FROM "{table1}" T0
-                  INNER JOIN "{table2}" T1
-                     ON (T0."{rel_field}_id" = T1."id")
-                  WHERE  T1."parent_id" IS NULL
-                  UNION ALL
-                  SELECT __tree.tree_depth + 1 AS tree_depth,
-                         __tree.tree_path
-                                || T1.id,
-                         T1."id"
-                   FROM "{table1}" T0
-                  INNER JOIN "{table2}" T1
-                     ON (T0."{rel_field}_id" = T1."id")
-                  JOIN   __tree
-                  ON     T1."parent_id" = __tree.tree_pk
-            )
             SELECT count(*)
               FROM (
-                    SELECT T0."id"
-                      FROM "{table1}" T0
-                     INNER JOIN "{table2}" T1
-                        ON (T0."{rel_field}_id" = T1."id")
-                     WHERE (T1.id = ANY(__tree.tree_path))
+                    SELECT (__tree.tree_path) AS "tree_path"
+                    FROM "{table1}" T3 JOIN __tree ON T3."{rel_field}_id" = __tree.tree_pk
+                    WHERE ("{table2}"."id" = ANY(tree_path))
                    ) _count
             """
 
