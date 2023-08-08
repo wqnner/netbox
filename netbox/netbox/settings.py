@@ -418,6 +418,9 @@ TEMPLATES = [
 ]
 
 # Set up authentication backends
+if not REMOTE_AUTH_ENABLED:
+    # ignore setting if REMOTE_AUTH_ENABLED not set
+    REMOTE_AUTH_BACKEND = 'netbox.authentication.RemoteUserBackend'
 if type(REMOTE_AUTH_BACKEND) not in (list, tuple):
     REMOTE_AUTH_BACKEND = [REMOTE_AUTH_BACKEND]
 AUTHENTICATION_BACKENDS = [
