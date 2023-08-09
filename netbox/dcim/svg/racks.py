@@ -77,13 +77,15 @@ class RackElevationSVG:
     :param margin_width: Margin width, in pixels (where reservations appear)
     :param user: User instance. If specified, only devices viewable by this user will be fully displayed.
     :param include_images: If true, the SVG document will embed front/rear device face images, where available
+    :param include_labels: If true, the SVG document will show front/rear device labels
     :param base_url: Base URL for links within the SVG document. If none, links will be relative.
     :param highlight_params: Iterable of two-tuples which identifies attributes of devices to highlight
     """
     def __init__(self, rack, unit_height=None, unit_width=None, legend_width=None, margin_width=None, user=None,
-                 include_images=True, base_url=None, highlight_params=None):
+                 include_images=True, include_labels=True, base_url=None, highlight_params=None):
         self.rack = rack
         self.include_images = include_images
+        self.include_labels = include_labels
         self.base_url = base_url.rstrip('/') if base_url is not None else ''
 
         # Set drawing dimensions
@@ -178,7 +180,8 @@ class RackElevationSVG:
             link.add(Rect(coords, size, style=f'fill: #{color}', class_=f'slot{css_extra}'))
         else:
             link.add(Rect(coords, size, class_=f'slot blocked{css_extra}'))
-        link.add(Text(name, insert=text_coords, fill=text_color, class_=f'label{css_extra}'))
+        if self.include_labels:
+            link.add(Text(name, insert=text_coords, fill=text_color, class_=f'label{css_extra}'))
 
         # Embed device type image if provided
         if self.include_images and image:
@@ -191,13 +194,14 @@ class RackElevationSVG:
             )
             image.fit(scale='slice')
             link.add(image)
-            link.add(
-                Text(name, insert=text_coords, stroke='black', stroke_width='0.2em', stroke_linejoin='round',
-                     class_=f'device-image-label{css_extra}')
-            )
-            link.add(
-                Text(name, insert=text_coords, fill='white', class_=f'device-image-label{css_extra}')
-            )
+            if self.include_labels:
+                link.add(
+                    Text(name, insert=text_coords, stroke='black', stroke_width='0.2em', stroke_linejoin='round',
+                         class_=f'device-image-label{css_extra}')
+                )
+                link.add(
+                    Text(name, insert=text_coords, fill='white', class_=f'device-image-label{css_extra}')
+                )
 
         self.drawing.add(link)
 
