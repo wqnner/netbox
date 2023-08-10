@@ -221,6 +221,7 @@ class RackViewSet(NetBoxModelViewSet):
                 unit_height=data['unit_height'],
                 legend_width=data['legend_width'],
                 include_images=data['include_images'],
+                include_labels=data['include_labels'],
                 base_url=request.build_absolute_uri('/'),
                 highlight_params=highlight_params
             )

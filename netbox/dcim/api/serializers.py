@@ -291,6 +291,10 @@ class RackElevationDetailFilterSerializer(serializers.Serializer):
         required=False,
         default=True
     )
+    include_labels = serializers.BooleanField(
+        required=False,
+        default=True
+    )
 
 
 #

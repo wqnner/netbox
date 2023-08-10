@@ -393,6 +393,7 @@ class Rack(PrimaryModel, WeightMixin):
             legend_width=RACK_ELEVATION_DEFAULT_LEGEND_WIDTH,
             margin_width=RACK_ELEVATION_DEFAULT_MARGIN_WIDTH,
             include_images=True,
+            include_labels=True,
             base_url=None,
             highlight_params=None
     ):
@@ -418,6 +419,7 @@ class Rack(PrimaryModel, WeightMixin):
             margin_width=margin_width,
             user=user,
             include_images=include_images,
+            include_labels=include_labels,
             base_url=base_url,
             highlight_params=highlight_params
         )
