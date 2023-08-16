@@ -1032,7 +1032,7 @@ class L2VPNTerminationTestCase(
         ViewTestCases.EditObjectViewTestCase,
         ViewTestCases.DeleteObjectViewTestCase,
         ViewTestCases.ListObjectsViewTestCase,
-        # ViewTestCases.BulkImportObjectsViewTestCase,
+        ViewTestCases.BulkImportObjectsViewTestCase,
         ViewTestCases.BulkDeleteObjectsViewTestCase,
 ):
 
