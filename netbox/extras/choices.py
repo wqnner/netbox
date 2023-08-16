@@ -13,6 +13,7 @@ class CustomFieldTypeChoices(ChoiceSet):
     TYPE_DECIMAL = 'decimal'
     TYPE_BOOLEAN = 'boolean'
     TYPE_DATE = 'date'
+    TYPE_DATETIME = 'datetime'
     TYPE_URL = 'url'
     TYPE_JSON = 'json'
     TYPE_SELECT = 'select'
@@ -27,6 +28,7 @@ class CustomFieldTypeChoices(ChoiceSet):
         (TYPE_DECIMAL, 'Decimal'),
         (TYPE_BOOLEAN, 'Boolean (true/false)'),
         (TYPE_DATE, 'Date'),
+        (TYPE_DATETIME, 'Date & time'),
         (TYPE_URL, 'URL'),
         (TYPE_JSON, 'JSON'),
         (TYPE_SELECT, 'Selection'),
@@ -54,11 +56,13 @@ class CustomFieldVisibilityChoices(ChoiceSet):
     VISIBILITY_READ_WRITE = 'read-write'
     VISIBILITY_READ_ONLY = 'read-only'
     VISIBILITY_HIDDEN = 'hidden'
+    VISIBILITY_HIDDEN_IFUNSET = 'hidden-ifunset'
 
     CHOICES = (
         (VISIBILITY_READ_WRITE, 'Read/Write'),
         (VISIBILITY_READ_ONLY, 'Read-only'),
         (VISIBILITY_HIDDEN, 'Hidden'),
+        (VISIBILITY_HIDDEN_IFUNSET, 'Hidden (if unset)'),
     )
 
 
@@ -114,7 +118,7 @@ class JournalEntryKindChoices(ChoiceSet):
 
 
 #
-# Log Levels for Reports and Scripts
+# Reports and Scripts
 #
 
 class LogLevelChoices(ChoiceSet):
@@ -131,6 +135,17 @@ class LogLevelChoices(ChoiceSet):
         (LOG_INFO, 'Info', 'cyan'),
         (LOG_WARNING, 'Warning', 'yellow'),
         (LOG_FAILURE, 'Failure', 'red'),
+    )
+
+
+class DurationChoices(ChoiceSet):
+
+    CHOICES = (
+        (60, 'Hourly'),
+        (720, '12 hours'),
+        (1440, 'Daily'),
+        (10080, 'Weekly'),
+        (43200, '30 days'),
     )
 
 
@@ -195,7 +210,7 @@ class ChangeActionChoices(ChoiceSet):
     ACTION_DELETE = 'delete'
 
     CHOICES = (
-        (ACTION_CREATE, 'Create'),
-        (ACTION_UPDATE, 'Update'),
-        (ACTION_DELETE, 'Delete'),
+        (ACTION_CREATE, 'Create', 'green'),
+        (ACTION_UPDATE, 'Update', 'blue'),
+        (ACTION_DELETE, 'Delete', 'red'),
     )

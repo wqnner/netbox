@@ -3,7 +3,8 @@ from django.utils.translation import gettext as _
 
 from dcim.models import *
 from netbox.forms import NetBoxModelForm
-from utilities.forms import DynamicModelChoiceField, DynamicModelMultipleChoiceField, ExpandableNameField
+from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField, ExpandableNameField
+from utilities.forms.widgets import APISelect
 from . import model_forms
 
 __all__ = (
@@ -51,7 +52,10 @@ class ComponentCreateForm(forms.Form):
         super().clean()
 
         # Validate that all replication fields generate an equal number of values
-        pattern_count = len(self.cleaned_data[self.replication_fields[0]])
+        if not (patterns := self.cleaned_data.get(self.replication_fields[0])):
+            return
+
+        pattern_count = len(patterns)
         for field_name in self.replication_fields:
             value_count = len(self.cleaned_data[field_name])
             if self.cleaned_data[field_name] and value_count != pattern_count:
@@ -100,6 +104,7 @@ class FrontPortTemplateCreateForm(ComponentCreateForm, model_forms.FrontPortTemp
         choices=[],
         label=_('Rear ports'),
         help_text=_('Select one rear port assignment for each front port being created.'),
+        widget=forms.SelectMultiple(attrs={'size': 6})
     )
 
     # Override fieldsets from FrontPortTemplateForm to omit rear_port_position
@@ -225,10 +230,23 @@ class InterfaceCreateForm(ComponentCreateForm, model_forms.InterfaceForm):
 
 
 class FrontPortCreateForm(ComponentCreateForm, model_forms.FrontPortForm):
+    device = DynamicModelChoiceField(
+        queryset=Device.objects.all(),
+        selector=True,
+        widget=APISelect(
+            # TODO: Clean up the application of HTMXSelect attributes
+            attrs={
+                'hx-get': '.',
+                'hx-include': f'#form_fields',
+                'hx-target': f'#form_fields',
+            }
+        )
+    )
     rear_port = forms.MultipleChoiceField(
         choices=[],
         label=_('Rear ports'),
         help_text=_('Select one rear port assignment for each front port being created.'),
+        widget=forms.SelectMultiple(attrs={'size': 6})
     )
 
     # Override fieldsets from FrontPortForm to omit rear_port_position
@@ -244,9 +262,10 @@ class FrontPortCreateForm(ComponentCreateForm, model_forms.FrontPortForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        device = Device.objects.get(
-            pk=self.initial.get('device') or self.data.get('device')
-        )
+        if device_id := self.data.get('device') or self.initial.get('device'):
+            device = Device.objects.get(pk=device_id)
+        else:
+            return
 
         # Determine which rear port positions are occupied. These will be excluded from the list of available
         # mappings.

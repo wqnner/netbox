@@ -19,6 +19,10 @@
               <td>{{ object.provider|linkify }}</td>
             </tr>
             <tr>
+              <th scope="row">Account</th>
+              <td>{{ object.provider_account|linkify|placeholder }}</td>
+            </tr>
+            <tr>
               <th scope="row">Circuit ID</th>
               <td>{{ object.cid }}</td>
             </tr>
@@ -66,7 +70,6 @@
     <div class="col col-md-6">
       {% include 'circuits/inc/circuit_termination.html' with termination=object.termination_a side='A' %}
       {% include 'circuits/inc/circuit_termination.html' with termination=object.termination_z side='Z' %}
-      {% include 'inc/panels/contacts.html' %}
       {% include 'inc/panels/image_attachments.html' %}
       {% plugin_right_page object %}
     </div>

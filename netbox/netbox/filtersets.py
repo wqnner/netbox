@@ -7,14 +7,14 @@ from django_filters.exceptions import FieldLookupError
 from django_filters.utils import get_model_field, resolve_field
 from django.utils.translation import gettext as _
 
-from extras.choices import CustomFieldFilterLogicChoices
+from extras.choices import CustomFieldFilterLogicChoices, ObjectChangeActionChoices
 from extras.filters import TagFilter
-from extras.models import CustomField, SavedFilter
+from extras.models import CustomField, ObjectChange, SavedFilter
 from utilities.constants import (
     FILTER_CHAR_BASED_LOOKUP_MAP, FILTER_NEGATION_LOOKUP_MAP, FILTER_TREENODE_NEGATION_LOOKUP_MAP,
     FILTER_NUMERIC_BASED_LOOKUP_MAP
 )
-from utilities.forms import MACAddressField
+from utilities.forms.fields import MACAddressField
 from utilities import filters
 
 __all__ = (
@@ -177,7 +177,8 @@ class BaseFilterSet(django_filters.FilterSet):
                     # create the new filter with the same type because there is no guarantee the defined type
                     # is the same as the default type for the field
                     resolve_field(field, lookup_expr)  # Will raise FieldLookupError if the lookup is invalid
-                    new_filter = type(existing_filter)(
+                    filter_cls = django_filters.BooleanFilter if lookup_expr == 'empty' else type(existing_filter)
+                    new_filter = filter_cls(
                         field_name=field_name,
                         lookup_expr=lookup_expr,
                         label=existing_filter.label,
@@ -224,6 +225,14 @@ class BaseFilterSet(django_filters.FilterSet):
 
         return filters
 
+    @classmethod
+    def filter_for_lookup(cls, field, lookup_type):
+
+        if lookup_type == 'empty':
+            return django_filters.BooleanFilter, {}
+
+        return super().filter_for_lookup(field, lookup_type)
+
 
 class ChangeLoggedModelFilterSet(BaseFilterSet):
     """
@@ -231,6 +240,26 @@ class ChangeLoggedModelFilterSet(BaseFilterSet):
     """
     created = filters.MultiValueDateTimeFilter()
     last_updated = filters.MultiValueDateTimeFilter()
+    created_by_request = django_filters.UUIDFilter(
+        method='filter_by_request'
+    )
+    updated_by_request = django_filters.UUIDFilter(
+        method='filter_by_request'
+    )
+
+    def filter_by_request(self, queryset, name, value):
+        content_type = ContentType.objects.get_for_model(self.Meta.model)
+        action = {
+            'created_by_request': ObjectChangeActionChoices.ACTION_CREATE,
+            'updated_by_request': ObjectChangeActionChoices.ACTION_UPDATE,
+        }.get(name)
+        request_id = value
+        pks = ObjectChange.objects.filter(
+            changed_object_type=content_type,
+            action=action,
+            request_id=request_id
+        ).values_list('changed_object_id', flat=True)
+        return queryset.filter(pk__in=pks)
 
 
 class NetBoxModelFilterSet(ChangeLoggedModelFilterSet):

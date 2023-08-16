@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import gettext as _
 
 from extras.filtersets import LocalConfigContextFilterSet
+from extras.models import ConfigTemplate
 from ipam.models import ASN, L2VPN, IPAddress, VRF
 from netbox.filtersets import (
     BaseFilterSet, ChangeLoggedModelFilterSet, OrganizationalModelFilterSet, NetBoxModelFilterSet,
@@ -437,6 +438,16 @@ class DeviceTypeFilterSet(NetBoxModelFilterSet):
         to_field_name='slug',
         label=_('Manufacturer (slug)'),
     )
+    default_platform_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=Platform.objects.all(),
+        label=_('Default platform (ID)'),
+    )
+    default_platform = django_filters.ModelMultipleChoiceFilter(
+        field_name='default_platform__slug',
+        queryset=Platform.objects.all(),
+        to_field_name='slug',
+        label=_('Default platform (slug)'),
+    )
     has_front_image = django_filters.BooleanFilter(
         label=_('Has a front image'),
         method='_has_front_image'
@@ -675,6 +686,10 @@ class InterfaceTemplateFilterSet(ChangeLoggedModelFilterSet, ModularDeviceTypeCo
         choices=InterfaceTypeChoices,
         null_value=None
     )
+    bridge_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='bridge',
+        queryset=InterfaceTemplate.objects.all()
+    )
     poe_mode = django_filters.MultipleChoiceFilter(
         choices=InterfacePoEModeChoices
     )
@@ -684,7 +699,7 @@ class InterfaceTemplateFilterSet(ChangeLoggedModelFilterSet, ModularDeviceTypeCo
 
     class Meta:
         model = InterfaceTemplate
-        fields = ['id', 'name', 'type', 'mgmt_only']
+        fields = ['id', 'name', 'type', 'enabled', 'mgmt_only']
 
 
 class FrontPortTemplateFilterSet(ChangeLoggedModelFilterSet, ModularDeviceTypeComponentFilterSet):
@@ -767,6 +782,10 @@ class InventoryItemTemplateFilterSet(ChangeLoggedModelFilterSet, DeviceTypeCompo
 
 
 class DeviceRoleFilterSet(OrganizationalModelFilterSet):
+    config_template_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=ConfigTemplate.objects.all(),
+        label=_('Config template (ID)'),
+    )
 
     class Meta:
         model = DeviceRole
@@ -784,6 +803,10 @@ class PlatformFilterSet(OrganizationalModelFilterSet):
         queryset=Manufacturer.objects.all(),
         to_field_name='slug',
         label=_('Manufacturer (slug)'),
+    )
+    config_template_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=ConfigTemplate.objects.all(),
+        label=_('Config template (ID)'),
     )
 
     class Meta:
@@ -927,6 +950,10 @@ class DeviceFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilter
         method='_virtual_chassis_member',
         label=_('Is a virtual chassis member')
     )
+    config_template_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=ConfigTemplate.objects.all(),
+        label=_('Config template (ID)'),
+    )
     console_ports = django_filters.BooleanFilter(
         method='_console_ports',
         label=_('Has console ports'),
@@ -1050,10 +1077,13 @@ class VirtualDeviceContextFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
     def search(self, queryset, name, value):
         if not value.strip():
             return queryset
-        return queryset.filter(
-            Q(name__icontains=value) |
-            Q(identifier=value.strip())
-        ).distinct()
+
+        qs_filter = Q(name__icontains=value)
+        try:
+            qs_filter |= Q(identifier=int(value))
+        except ValueError:
+            pass
+        return queryset.filter(qs_filter).distinct()
 
     def _has_primary_ip(self, queryset, name, value):
         params = Q(primary_ip4__isnull=False) | Q(primary_ip6__isnull=False)
@@ -1191,6 +1221,28 @@ class DeviceComponentFilterSet(django_filters.FilterSet):
         queryset=Device.objects.all(),
         to_field_name='name',
         label=_('Device (name)'),
+    )
+    device_type_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='device__device_type',
+        queryset=DeviceType.objects.all(),
+        label=_('Device type (ID)'),
+    )
+    device_type = django_filters.ModelMultipleChoiceFilter(
+        field_name='device__device_type__model',
+        queryset=DeviceType.objects.all(),
+        to_field_name='model',
+        label=_('Device type (model)'),
+    )
+    device_role_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='device__device_role',
+        queryset=DeviceRole.objects.all(),
+        label=_('Device role (ID)'),
+    )
+    device_role = django_filters.ModelMultipleChoiceFilter(
+        field_name='device__device_role__slug',
+        queryset=DeviceRole.objects.all(),
+        to_field_name='slug',
+        label=_('Device role (slug)'),
     )
     virtual_chassis_id = django_filters.ModelMultipleChoiceFilter(
         field_name='device__virtual_chassis',
@@ -1873,6 +1925,7 @@ class PowerFeedFilterSet(NetBoxModelFilterSet, CabledObjectFilterSet, PathEndpoi
             return queryset
         qs_filter = (
             Q(name__icontains=value) |
+            Q(power_panel__name__icontains=value) |
             Q(comments__icontains=value)
         )
         return queryset.filter(qs_filter)

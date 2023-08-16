@@ -1,7 +1,7 @@
 import netaddr
 
 from .constants import *
-from .models import Prefix, VLAN
+from .models import ASN, Prefix, VLAN
 
 
 def add_requested_prefixes(parent, prefix_list, show_available=True, show_assigned=True):
@@ -121,7 +121,7 @@ def add_available_vlans(vlans, vlan_group=None):
         })
 
     vlans = list(vlans) + new_vlans
-    vlans.sort(key=lambda v: v.vid if type(v) == VLAN else v['vid'])
+    vlans.sort(key=lambda v: v.vid if type(v) is VLAN else v['vid'])
 
     return vlans
 

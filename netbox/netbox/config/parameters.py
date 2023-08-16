@@ -29,6 +29,17 @@ PARAMS = (
         },
     ),
     ConfigParam(
+        name='BANNER_MAINTENANCE',
+        label=_('Maintenance banner'),
+        default='NetBox is currently in maintenance mode. Functionality may be limited.',
+        description=_('Additional content to display when in maintenance mode'),
+        field_kwargs={
+            'widget': forms.Textarea(
+                attrs={'class': 'vLargeTextField'}
+            ),
+        },
+    ),
+    ConfigParam(
         name='BANNER_TOP',
         label=_('Top banner'),
         default='',
@@ -214,7 +225,7 @@ PARAMS = (
         field=forms.IntegerField
     ),
     ConfigParam(
-        name='JOBRESULT_RETENTION',
+        name='JOB_RETENTION',
         label=_('Job result retention'),
         default=90,
         description=_("Days to retain job result history (set to zero for unlimited)"),

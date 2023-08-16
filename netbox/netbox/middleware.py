@@ -3,35 +3,92 @@ import uuid
 from urllib import parse
 
 from django.conf import settings
-from django.contrib import auth
+from django.contrib import auth, messages
 from django.contrib.auth.middleware import RemoteUserMiddleware as RemoteUserMiddleware_
 from django.core.exceptions import ImproperlyConfigured
-from django.db import ProgrammingError
+from django.db import connection, ProgrammingError
+from django.db.utils import InternalError
 from django.http import Http404, HttpResponseRedirect
 
 from extras.context_managers import change_logging
-from netbox.config import clear_config
+from netbox.config import clear_config, get_config
 from netbox.views import handler_500
 from utilities.api import is_api_request, rest_api_server_error
 
+__all__ = (
+    'CoreMiddleware',
+    'MaintenanceModeMiddleware',
+    'RemoteUserMiddleware',
+)
 
-class LoginRequiredMiddleware:
-    """
-    If LOGIN_REQUIRED is True, redirect all non-authenticated users to the login page.
-    """
+
+class CoreMiddleware:
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Redirect unauthenticated requests (except those exempted) to the login page if LOGIN_REQUIRED is true
-        if settings.LOGIN_REQUIRED and not request.user.is_authenticated:
 
-            # Redirect unauthenticated requests
-            if not request.path_info.startswith(settings.EXEMPT_PATHS):
-                login_url = f'{settings.LOGIN_URL}?next={parse.quote(request.get_full_path_info())}'
-                return HttpResponseRedirect(login_url)
+        # Assign a random unique ID to the request. This will be used for change logging.
+        request.id = uuid.uuid4()
 
-        return self.get_response(request)
+        # Enforce the LOGIN_REQUIRED config parameter. If true, redirect all non-exempt unauthenticated requests
+        # to the login page.
+        if (
+            settings.LOGIN_REQUIRED and
+            not request.user.is_authenticated and
+            not request.path_info.startswith(settings.AUTH_EXEMPT_PATHS)
+        ):
+            login_url = f'{settings.LOGIN_URL}?next={parse.quote(request.get_full_path_info())}'
+            return HttpResponseRedirect(login_url)
+
+        # Enable the change_logging context manager and process the request.
+        with change_logging(request):
+            response = self.get_response(request)
+
+        # Attach the unique request ID as an HTTP header.
+        response['X-Request-ID'] = request.id
+
+        # Enable the Vary header to help with caching of HTMX responses
+        response['Vary'] = 'HX-Request'
+
+        # If this is an API request, attach an HTTP header annotating the API version (e.g. '3.5').
+        if is_api_request(request):
+            response['API-Version'] = settings.REST_FRAMEWORK_VERSION
+
+        # Clear any cached dynamic config parameters after each request.
+        clear_config()
+
+        return response
+
+    def process_exception(self, request, exception):
+        """
+        Implement custom error handling logic for production deployments.
+        """
+        # Don't catch exceptions when in debug mode
+        if settings.DEBUG:
+            return
+
+        # Cleanly handle exceptions that occur from REST API requests
+        if is_api_request(request):
+            return rest_api_server_error(request)
+
+        # Ignore Http404s (defer to Django's built-in 404 handling)
+        if isinstance(exception, Http404):
+            return
+
+        # Determine the type of exception. If it's a common issue, return a custom error page with instructions.
+        custom_template = None
+        if isinstance(exception, ProgrammingError):
+            custom_template = 'exceptions/programming_error.html'
+        elif isinstance(exception, ImportError):
+            custom_template = 'exceptions/import_error.html'
+        elif isinstance(exception, PermissionError):
+            custom_template = 'exceptions/permission_error.html'
+
+        # Return a custom error message, or fall back to Django's default 500 error handling
+        if custom_template:
+            return handler_500(request, template_name=custom_template)
 
 
 class RemoteUserMiddleware(RemoteUserMiddleware_):
@@ -116,99 +173,45 @@ class RemoteUserMiddleware(RemoteUserMiddleware_):
         return groups
 
 
-class ObjectChangeMiddleware:
+class MaintenanceModeMiddleware:
     """
-    This middleware performs three functions in response to an object being created, updated, or deleted:
-
-        1. Create an ObjectChange to reflect the modification to the object in the changelog.
-        2. Enqueue any relevant webhooks.
-        3. Increment the metric counter for the event type.
-
-    The post_save and post_delete signals are employed to catch object modifications, however changes are recorded a bit
-    differently for each. Objects being saved are cached into thread-local storage for action *after* the response has
-    completed. This ensures that serialization of the object is performed only after any related objects (e.g. tags)
-    have been created. Conversely, deletions are acted upon immediately, so that the serialized representation of the
-    object is recorded before it (and any related objects) are actually deleted from the database.
+    Middleware that checks if the application is in maintenance mode
+    and restricts write-related operations to the database.
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Assign a random unique ID to the request. This will be used to associate multiple object changes made during
-        # the same request.
-        request.id = uuid.uuid4()
+        if get_config().MAINTENANCE_MODE:
+            self._set_session_type(
+                allow_write=request.path_info.startswith(settings.MAINTENANCE_EXEMPT_PATHS)
+            )
 
-        # Process the request with change logging enabled
-        with change_logging(request):
-            response = self.get_response(request)
-
-        return response
-
-
-class APIVersionMiddleware:
-    """
-    If the request is for an API endpoint, include the API version as a response header.
-    """
-
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        response = self.get_response(request)
-        if is_api_request(request):
-            response['API-Version'] = settings.REST_FRAMEWORK_VERSION
-        return response
-
-
-class DynamicConfigMiddleware:
-    """
-    Store the cached NetBox configuration in thread-local storage for the duration of the request.
-    """
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        response = self.get_response(request)
-        clear_config()
-        return response
-
-
-class ExceptionHandlingMiddleware:
-    """
-    Intercept certain exceptions which are likely indicative of installation issues and provide helpful instructions
-    to the user.
-    """
-
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
         return self.get_response(request)
 
+    @staticmethod
+    def _set_session_type(allow_write):
+        """
+        Prevent any write-related database operations.
+
+        Args:
+            allow_write (bool): If True, write operations will be permitted.
+        """
+        with connection.cursor() as cursor:
+            mode = 'READ WRITE' if allow_write else 'READ ONLY'
+            cursor.execute(f'SET SESSION CHARACTERISTICS AS TRANSACTION {mode};')
+
     def process_exception(self, request, exception):
+        """
+        Prevent any write-related database operations if an exception is raised.
+        """
+        if get_config().MAINTENANCE_MODE and isinstance(exception, InternalError):
+            error_message = 'NetBox is currently operating in maintenance mode and is unable to perform write ' \
+                            'operations. Please try again later.'
 
-        # Handle exceptions that occur from REST API requests
-        # if is_api_request(request):
-        #     return rest_api_server_error(request)
+            if is_api_request(request):
+                return rest_api_server_error(request, error=error_message)
 
-        # Don't catch exceptions when in debug mode
-        if settings.DEBUG:
-            return
-
-        # Ignore Http404s (defer to Django's built-in 404 handling)
-        if isinstance(exception, Http404):
-            return
-
-        # Determine the type of exception. If it's a common issue, return a custom error page with instructions.
-        custom_template = None
-        if isinstance(exception, ProgrammingError):
-            custom_template = 'exceptions/programming_error.html'
-        elif isinstance(exception, ImportError):
-            custom_template = 'exceptions/import_error.html'
-        elif isinstance(exception, PermissionError):
-            custom_template = 'exceptions/permission_error.html'
-
-        # Return a custom error message, or fall back to Django's default 500 error handling
-        if custom_template:
-            return handler_500(request, template_name=custom_template)
+            messages.error(request, error_message)
+            return HttpResponseRedirect(request.path_info)

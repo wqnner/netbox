@@ -4,6 +4,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.related import RelatedField
+from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django_tables2.data import TableQuerysetData
@@ -12,7 +14,7 @@ from extras.models import CustomField, CustomLink
 from extras.choices import CustomFieldVisibilityChoices
 from netbox.tables import columns
 from utilities.paginator import EnhancedPaginator, get_paginate_count
-from utilities.utils import highlight_string, title
+from utilities.utils import get_viewname, highlight_string, title
 
 __all__ = (
     'BaseTable',
@@ -52,7 +54,7 @@ class BaseTable(tables.Table):
         #   3. Meta.fields
         selected_columns = None
         if user is not None and not isinstance(user, AnonymousUser):
-            selected_columns = user.config.get(f"tables.{self.__class__.__name__}.columns")
+            selected_columns = user.config.get(f"tables.{self.name}.columns")
         if not selected_columns:
             selected_columns = getattr(self.Meta, 'default_columns', self.Meta.fields)
 
@@ -112,6 +114,10 @@ class BaseTable(tables.Table):
         return columns
 
     @property
+    def name(self):
+        return self.__class__.__name__
+
+    @property
     def available_columns(self):
         return self._get_columns(visible=False)
 
@@ -136,13 +142,16 @@ class BaseTable(tables.Table):
         """
         # Save ordering preference
         if request.user.is_authenticated:
-            table_name = self.__class__.__name__
             if self.prefixed_order_by_field in request.GET:
-                # If an ordering has been specified as a query parameter, save it as the
-                # user's preferred ordering for this table.
-                ordering = request.GET.getlist(self.prefixed_order_by_field)
-                request.user.config.set(f'tables.{table_name}.ordering', ordering, commit=True)
-            elif ordering := request.user.config.get(f'tables.{table_name}.ordering'):
+                if request.GET[self.prefixed_order_by_field]:
+                    # If an ordering has been specified as a query parameter, save it as the
+                    # user's preferred ordering for this table.
+                    ordering = request.GET.getlist(self.prefixed_order_by_field)
+                    request.user.config.set(f'tables.{self.name}.ordering', ordering, commit=True)
+                else:
+                    # If the ordering has been set to none (empty), clear any existing preference.
+                    request.user.config.clear(f'tables.{self.name}.ordering', commit=True)
+            elif ordering := request.user.config.get(f'tables.{self.name}.ordering'):
                 # If no ordering has been specified, set the preferred ordering (if any).
                 self.order_by = ordering
 
@@ -197,6 +206,19 @@ class NetBoxTable(BaseTable):
 
         super().__init__(*args, extra_columns=extra_columns, **kwargs)
 
+    @property
+    def htmx_url(self):
+        """
+        Return the base HTML request URL for embedded tables.
+        """
+        if getattr(self, 'embedded', False):
+            viewname = get_viewname(self._meta.model, action='list')
+            try:
+                return reverse(viewname)
+            except NoReverseMatch:
+                pass
+        return ''
+
 
 class SearchTable(tables.Table):
     object_type = columns.ContentTypeColumn(
@@ -204,7 +226,8 @@ class SearchTable(tables.Table):
         order_by="object___meta__verbose_name",
     )
     object = tables.Column(
-        linkify=True
+        linkify=True,
+        order_by=('name', )
     )
     field = tables.Column()
     value = tables.Column()

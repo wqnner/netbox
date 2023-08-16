@@ -143,9 +143,12 @@ class ObjectChildrenView(ObjectView, ActionsMixin, TableMixin):
         return render(request, self.get_template_name(), {
             'object': instance,
             'child_model': self.child_model,
+            'base_template': f'{instance._meta.app_label}/{instance._meta.model_name}.html',
             'table': table,
+            'table_config': f'{table.name}_config',
             'actions': actions,
             'tab': self.tab,
+            'return_url': request.get_full_path(),
             **self.get_extra_context(request, instance),
         })
 
@@ -217,6 +220,12 @@ class ObjectEditView(GetReturnURLMixin, BaseObjectView):
         initial_data = normalize_querydict(request.GET)
         form = self.form(instance=obj, initial=initial_data)
         restrict_form_fields(form, request.user)
+
+        # If this is an HTMX request, return only the rendered form HTML
+        if is_htmx(request):
+            return render(request, 'htmx/form.html', {
+                'form': form,
+            })
 
         return render(request, self.template_name, {
             'model': model,
@@ -424,6 +433,12 @@ class ComponentCreateView(GetReturnURLMixin, BaseObjectView):
     def get(self, request):
         form = self.initialize_form(request)
         instance = self.alter_object(self.queryset.model(), request)
+
+        # If this is an HTMX request, return only the rendered form HTML
+        if is_htmx(request):
+            return render(request, 'htmx/form.html', {
+                'form': form,
+            })
 
         return render(request, self.template_name, {
             'object': instance,

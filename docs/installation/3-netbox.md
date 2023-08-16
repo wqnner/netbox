@@ -100,6 +100,8 @@ Create a system user account named `netbox`. We'll configure the WSGI and HTTP s
     ```
     sudo adduser --system --group netbox
     sudo chown --recursive netbox /opt/netbox/netbox/media/
+    sudo chown --recursive netbox /opt/netbox/netbox/reports/
+    sudo chown --recursive netbox /opt/netbox/netbox/scripts/
     ```
 
 === "CentOS"
@@ -108,6 +110,8 @@ Create a system user account named `netbox`. We'll configure the WSGI and HTTP s
     sudo groupadd --system netbox
     sudo adduser --system -g netbox netbox
     sudo chown --recursive netbox /opt/netbox/netbox/media/
+    sudo chown --recursive netbox /opt/netbox/netbox/reports/
+    sudo chown --recursive netbox /opt/netbox/netbox/scripts/
     ```
 
 ## Configuration
@@ -198,14 +202,6 @@ When you have finished modifying the configuration, remember to save the file.
 ## Optional Requirements
 
 All Python packages required by NetBox are listed in `requirements.txt` and will be installed automatically. NetBox also supports some optional packages. If desired, these packages must be listed in `local_requirements.txt` within the NetBox root directory.
-
-### NAPALM
-
-Integration with the [NAPALM automation](../integrations/napalm.md) library allows NetBox to fetch live data from devices and return it to a requester via its REST API. The `NAPALM_USERNAME` and `NAPALM_PASSWORD` configuration parameters define the credentials to be used when connecting to a device.
-
-```no-highlight
-sudo sh -c "echo 'napalm' >> /opt/netbox/local_requirements.txt"
-```
 
 ### Remote File Storage
 

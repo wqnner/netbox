@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Prefetch, Sum
@@ -9,9 +11,10 @@ from dcim.filtersets import DeviceFilterSet
 from dcim.models import Device
 from dcim.tables import DeviceTable
 from extras.views import ObjectConfigContextView
-from ipam.models import IPAddress, Service
-from ipam.tables import AssignedIPAddressesTable, InterfaceVLANTable
+from ipam.models import IPAddress
+from ipam.tables import InterfaceVLANTable
 from netbox.views import generic
+from tenancy.views import ObjectContactsView
 from utilities.utils import count_related
 from utilities.views import ViewTab, register_model_view
 from . import filtersets, forms, tables
@@ -36,17 +39,12 @@ class ClusterTypeView(generic.ObjectView):
     queryset = ClusterType.objects.all()
 
     def get_extra_context(self, request, instance):
-        clusters = Cluster.objects.restrict(request.user, 'view').filter(
-            type=instance
-        ).annotate(
-            device_count=count_related(Device, 'cluster'),
-            vm_count=count_related(VirtualMachine, 'cluster')
+        related_models = (
+            (Cluster.objects.restrict(request.user, 'view').filter(type=instance), 'type_id'),
         )
-        clusters_table = tables.ClusterTable(clusters, user=request.user, exclude=('type',))
-        clusters_table.configure(request)
 
         return {
-            'clusters_table': clusters_table,
+            'related_models': related_models,
         }
 
 
@@ -64,7 +62,6 @@ class ClusterTypeDeleteView(generic.ObjectDeleteView):
 class ClusterTypeBulkImportView(generic.BulkImportView):
     queryset = ClusterType.objects.all()
     model_form = forms.ClusterTypeImportForm
-    table = tables.ClusterTypeTable
 
 
 class ClusterTypeBulkEditView(generic.BulkEditView):
@@ -102,17 +99,12 @@ class ClusterGroupView(generic.ObjectView):
     queryset = ClusterGroup.objects.all()
 
     def get_extra_context(self, request, instance):
-        clusters = Cluster.objects.restrict(request.user, 'view').filter(
-            group=instance
-        ).annotate(
-            device_count=count_related(Device, 'cluster'),
-            vm_count=count_related(VirtualMachine, 'cluster')
+        related_models = (
+            (Cluster.objects.restrict(request.user, 'view').filter(group=instance), 'group_id'),
         )
-        clusters_table = tables.ClusterTable(clusters, user=request.user, exclude=('group',))
-        clusters_table.configure(request)
 
         return {
-            'clusters_table': clusters_table,
+            'related_models': related_models,
         }
 
 
@@ -132,7 +124,6 @@ class ClusterGroupBulkImportView(generic.BulkImportView):
         cluster_count=count_related(Cluster, 'group')
     )
     model_form = forms.ClusterGroupImportForm
-    table = tables.ClusterGroupTable
 
 
 class ClusterGroupBulkEditView(generic.BulkEditView):
@@ -150,6 +141,11 @@ class ClusterGroupBulkDeleteView(generic.BulkDeleteView):
     )
     filterset = filtersets.ClusterGroupFilterSet
     table = tables.ClusterGroupTable
+
+
+@register_model_view(ClusterGroup, 'contacts')
+class ClusterGroupContactsView(ObjectContactsView):
+    queryset = ClusterGroup.objects.all()
 
 
 #
@@ -181,7 +177,7 @@ class ClusterVirtualMachinesView(generic.ObjectChildrenView):
     child_model = VirtualMachine
     table = tables.VirtualMachineTable
     filterset = filtersets.VirtualMachineFilterSet
-    template_name = 'virtualization/cluster/virtual_machines.html'
+    template_name = 'generic/object_children.html'
     tab = ViewTab(
         label=_('Virtual Machines'),
         badge=lambda obj: obj.virtual_machines.count(),
@@ -200,6 +196,13 @@ class ClusterDevicesView(generic.ObjectChildrenView):
     table = DeviceTable
     filterset = DeviceFilterSet
     template_name = 'virtualization/cluster/devices.html'
+    actions = ('add', 'import', 'export', 'bulk_edit', 'bulk_remove_devices')
+    action_perms = defaultdict(set, **{
+        'add': {'add'},
+        'import': {'add'},
+        'bulk_edit': {'change'},
+        'bulk_remove_devices': {'change'},
+    })
     tab = ViewTab(
         label=_('Devices'),
         badge=lambda obj: obj.devices.count(),
@@ -225,7 +228,6 @@ class ClusterDeleteView(generic.ObjectDeleteView):
 class ClusterBulkImportView(generic.BulkImportView):
     queryset = Cluster.objects.all()
     model_form = forms.ClusterImportForm
-    table = tables.ClusterTable
 
 
 class ClusterBulkEditView(generic.BulkEditView):
@@ -325,6 +327,11 @@ class ClusterRemoveDevicesView(generic.ObjectEditView):
         })
 
 
+@register_model_view(Cluster, 'contacts')
+class ClusterContactsView(ObjectContactsView):
+    queryset = Cluster.objects.all()
+
+
 #
 # Virtual machines
 #
@@ -339,32 +346,7 @@ class VirtualMachineListView(generic.ObjectListView):
 
 @register_model_view(VirtualMachine)
 class VirtualMachineView(generic.ObjectView):
-    queryset = VirtualMachine.objects.prefetch_related('tenant__group')
-
-    def get_extra_context(self, request, instance):
-        # Interfaces
-        vminterfaces = VMInterface.objects.restrict(request.user, 'view').filter(
-            virtual_machine=instance
-        ).prefetch_related(
-            Prefetch('ip_addresses', queryset=IPAddress.objects.restrict(request.user))
-        )
-        vminterface_table = tables.VirtualMachineVMInterfaceTable(vminterfaces, user=request.user, orderable=False)
-        if request.user.has_perm('virtualization.change_vminterface') or \
-                request.user.has_perm('virtualization.delete_vminterface'):
-            vminterface_table.columns.show('pk')
-
-        # Services
-        services = Service.objects.restrict(request.user, 'view').filter(
-            virtual_machine=instance
-        ).prefetch_related(
-            Prefetch('ipaddresses', queryset=IPAddress.objects.restrict(request.user)),
-            'virtual_machine'
-        )
-
-        return {
-            'vminterface_table': vminterface_table,
-            'services': services,
-        }
+    queryset = VirtualMachine.objects.all()
 
 
 @register_model_view(VirtualMachine, 'interfaces')
@@ -380,6 +362,14 @@ class VirtualMachineInterfacesView(generic.ObjectChildrenView):
         permission='virtualization.view_vminterface',
         weight=500
     )
+    actions = ('add', 'import', 'export', 'bulk_edit', 'bulk_delete', 'bulk_rename')
+    action_perms = defaultdict(set, **{
+        'add': {'add'},
+        'import': {'add'},
+        'bulk_edit': {'change'},
+        'bulk_delete': {'delete'},
+        'bulk_rename': {'change'},
+    })
 
     def get_children(self, request, parent):
         return parent.interfaces.restrict(request.user, 'view').prefetch_related(
@@ -413,7 +403,6 @@ class VirtualMachineDeleteView(generic.ObjectDeleteView):
 class VirtualMachineBulkImportView(generic.BulkImportView):
     queryset = VirtualMachine.objects.all()
     model_form = forms.VirtualMachineImportForm
-    table = tables.VirtualMachineTable
 
 
 class VirtualMachineBulkEditView(generic.BulkEditView):
@@ -429,6 +418,11 @@ class VirtualMachineBulkDeleteView(generic.BulkDeleteView):
     table = tables.VirtualMachineTable
 
 
+@register_model_view(VirtualMachine, 'contacts')
+class VirtualMachineContactsView(ObjectContactsView):
+    queryset = VirtualMachine.objects.all()
+
+
 #
 # VM interfaces
 #
@@ -438,7 +432,6 @@ class VMInterfaceListView(generic.ObjectListView):
     filterset = filtersets.VMInterfaceFilterSet
     filterset_form = forms.VMInterfaceFilterForm
     table = tables.VMInterfaceTable
-    actions = ('import', 'export', 'bulk_edit', 'bulk_delete')
 
 
 @register_model_view(VMInterface)
@@ -446,11 +439,6 @@ class VMInterfaceView(generic.ObjectView):
     queryset = VMInterface.objects.all()
 
     def get_extra_context(self, request, instance):
-        # Get assigned IP addresses
-        ipaddress_table = AssignedIPAddressesTable(
-            data=instance.ip_addresses.restrict(request.user, 'view'),
-            orderable=False
-        )
 
         # Get child interfaces
         child_interfaces = VMInterface.objects.restrict(request.user, 'view').filter(parent=instance)
@@ -475,7 +463,6 @@ class VMInterfaceView(generic.ObjectView):
         )
 
         return {
-            'ipaddress_table': ipaddress_table,
             'child_interfaces_table': child_interfaces_tables,
             'vlan_table': vlan_table,
         }
@@ -501,7 +488,6 @@ class VMInterfaceDeleteView(generic.ObjectDeleteView):
 class VMInterfaceBulkImportView(generic.BulkImportView):
     queryset = VMInterface.objects.all()
     model_form = forms.VMInterfaceImportForm
-    table = tables.VMInterfaceTable
 
 
 class VMInterfaceBulkEditView(generic.BulkEditView):

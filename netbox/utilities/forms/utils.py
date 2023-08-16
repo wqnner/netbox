@@ -12,6 +12,7 @@ __all__ = (
     'expand_alphanumeric_pattern',
     'expand_ipaddress_pattern',
     'form_from_model',
+    'get_field_value',
     'get_selected_values',
     'parse_alphanumeric_range',
     'parse_numeric_range',
@@ -59,6 +60,9 @@ def parse_alphanumeric_range(string):
         except ValueError:
             begin, end = dash_range, dash_range
         if begin.isdigit() and end.isdigit():
+            if int(begin) >= int(end):
+                raise forms.ValidationError(f'Range "{dash_range}" is invalid.')
+
             for n in list(range(int(begin), int(end) + 1)):
                 values.append(n)
         else:
@@ -70,6 +74,10 @@ def parse_alphanumeric_range(string):
                 # Not a valid range (more than a single character)
                 if not len(begin) == len(end) == 1:
                     raise forms.ValidationError(f'Range "{dash_range}" is invalid.')
+
+                if ord(begin) >= ord(end):
+                    raise forms.ValidationError(f'Range "{dash_range}" is invalid.')
+
                 for n in list(range(ord(begin), ord(end) + 1)):
                     values.append(chr(n))
     return values
@@ -111,6 +119,21 @@ def expand_ipaddress_pattern(string, family):
                 yield ''.join([lead, format(i, 'x' if family == 6 else 'd'), string])
         else:
             yield ''.join([lead, format(i, 'x' if family == 6 else 'd'), remnant])
+
+
+def get_field_value(form, field_name):
+    """
+    Return the current bound or initial value associated with a form field, prior to calling
+    clean() for the form.
+    """
+    field = form.fields[field_name]
+
+    if form.is_bound:
+        if data := form.data.get(field_name):
+            if field.valid_value(data):
+                return data
+
+    return form.get_initial_for_field(field, field_name)
 
 
 def get_selected_values(form, field_name):

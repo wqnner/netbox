@@ -4,6 +4,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils.translation import gettext as _
+from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.types import OpenApiTypes
 from netaddr.core import AddrFormatError
 
 from dcim.models import Device, Interface, Region, Site, SiteGroup
@@ -16,11 +18,10 @@ from virtualization.models import VirtualMachine, VMInterface
 from .choices import *
 from .models import *
 
-from rest_framework import serializers
-
 __all__ = (
     'AggregateFilterSet',
     'ASNFilterSet',
+    'ASNRangeFilterSet',
     'FHRPGroupAssignmentFilterSet',
     'FHRPGroupFilterSet',
     'IPAddressFilterSet',
@@ -166,6 +167,29 @@ class AggregateFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
             return queryset.filter(prefix=query)
         except (AddrFormatError, ValueError):
             return queryset.none()
+
+
+class ASNRangeFilterSet(OrganizationalModelFilterSet, TenancyFilterSet):
+    rir_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=RIR.objects.all(),
+        label=_('RIR (ID)'),
+    )
+    rir = django_filters.ModelMultipleChoiceFilter(
+        field_name='rir__slug',
+        queryset=RIR.objects.all(),
+        to_field_name='slug',
+        label=_('RIR (slug)'),
+    )
+
+    class Meta:
+        model = ASNRange
+        fields = ['id', 'name', 'start', 'end', 'description']
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        qs_filter = Q(description__icontains=value)
+        return queryset.filter(qs_filter)
 
 
 class ASNFilterSet(OrganizationalModelFilterSet, TenancyFilterSet):
@@ -392,6 +416,7 @@ class PrefixFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
         except (AddrFormatError, ValueError):
             return queryset.none()
 
+    @extend_schema_field(OpenApiTypes.STR)
     def filter_present_in_vrf(self, queryset, name, vrf):
         if vrf is None:
             return queryset.none
@@ -445,7 +470,7 @@ class IPRangeFilterSet(TenancyFilterSet, NetBoxModelFilterSet):
 
     class Meta:
         model = IPRange
-        fields = ['id', 'description']
+        fields = ['id', 'mark_utilized', 'description']
 
     def search(self, queryset, name, value):
         if not value.strip():
@@ -566,6 +591,10 @@ class IPAddressFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
         method='_assigned_to_interface',
         label=_('Is assigned to an interface'),
     )
+    assigned = django_filters.BooleanFilter(
+        method='_assigned',
+        label=_('Is assigned'),
+    )
     status = django_filters.MultipleChoiceFilter(
         choices=IPAddressStatusChoices,
         null_value=None
@@ -637,6 +666,7 @@ class IPAddressFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
             return queryset
         return queryset.filter(address__net_mask_length=value)
 
+    @extend_schema_field(OpenApiTypes.STR)
     def filter_present_in_vrf(self, queryset, name, vrf):
         if vrf is None:
             return queryset.none
@@ -680,6 +710,18 @@ class IPAddressFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
                 assigned_object_id__isnull=False
             )
 
+    def _assigned(self, queryset, name, value):
+        if value:
+            return queryset.exclude(
+                assigned_object_type__isnull=True,
+                assigned_object_id__isnull=True
+            )
+        else:
+            return queryset.filter(
+                assigned_object_type__isnull=True,
+                assigned_object_id__isnull=True
+            )
+
 
 class FHRPGroupFilterSet(NetBoxModelFilterSet):
     protocol = django_filters.MultipleChoiceFilter(
@@ -705,6 +747,7 @@ class FHRPGroupFilterSet(NetBoxModelFilterSet):
             Q(name__icontains=value)
         )
 
+    @extend_schema_field(OpenApiTypes.STR)
     def filter_related_ip(self, queryset, name, value):
         """
         Filter by VRF & prefix of assigned IP addresses.
@@ -919,9 +962,11 @@ class VLANFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
             pass
         return queryset.filter(qs_filter)
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_for_device(self, queryset, name, value):
         return queryset.get_for_device(value)
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_for_virtualmachine(self, queryset, name, value):
         return queryset.get_for_virtualmachine(value)
 

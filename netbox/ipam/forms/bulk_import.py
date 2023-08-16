@@ -9,12 +9,15 @@ from ipam.constants import *
 from ipam.models import *
 from netbox.forms import NetBoxModelImportForm
 from tenancy.models import Tenant
-from utilities.forms import CSVChoiceField, CSVContentTypeField, CSVModelChoiceField, SlugField
+from utilities.forms.fields import (
+    CSVChoiceField, CSVContentTypeField, CSVModelChoiceField, CSVModelMultipleChoiceField, SlugField
+)
 from virtualization.models import VirtualMachine, VMInterface
 
 __all__ = (
     'AggregateImportForm',
     'ASNImportForm',
+    'ASNRangeImportForm',
     'FHRPGroupImportForm',
     'IPAddressImportForm',
     'IPRangeImportForm',
@@ -39,10 +42,25 @@ class VRFImportForm(NetBoxModelImportForm):
         to_field_name='name',
         help_text=_('Assigned tenant')
     )
+    import_targets = CSVModelMultipleChoiceField(
+        queryset=RouteTarget.objects.all(),
+        required=False,
+        to_field_name='name',
+        help_text=_('Import route targets')
+    )
+    export_targets = CSVModelMultipleChoiceField(
+        queryset=RouteTarget.objects.all(),
+        required=False,
+        to_field_name='name',
+        help_text=_('Export route targets')
+    )
 
     class Meta:
         model = VRF
-        fields = ('name', 'rd', 'tenant', 'enforce_unique', 'description', 'comments', 'tags')
+        fields = (
+            'name', 'rd', 'tenant', 'enforce_unique', 'description', 'import_targets', 'export_targets', 'comments',
+            'tags',
+        )
 
 
 class RouteTargetImportForm(NetBoxModelImportForm):
@@ -64,9 +82,6 @@ class RIRImportForm(NetBoxModelImportForm):
     class Meta:
         model = RIR
         fields = ('name', 'slug', 'is_private', 'description', 'tags')
-        help_texts = {
-            'name': _('RIR name'),
-        }
 
 
 class AggregateImportForm(NetBoxModelImportForm):
@@ -85,6 +100,24 @@ class AggregateImportForm(NetBoxModelImportForm):
     class Meta:
         model = Aggregate
         fields = ('prefix', 'rir', 'tenant', 'date_added', 'description', 'comments', 'tags')
+
+
+class ASNRangeImportForm(NetBoxModelImportForm):
+    rir = CSVModelChoiceField(
+        queryset=RIR.objects.all(),
+        to_field_name='name',
+        help_text=_('Assigned RIR')
+    )
+    tenant = CSVModelChoiceField(
+        queryset=Tenant.objects.all(),
+        required=False,
+        to_field_name='name',
+        help_text=_('Assigned tenant')
+    )
+
+    class Meta:
+        model = ASNRange
+        fields = ('name', 'slug', 'rir', 'start', 'end', 'tenant', 'description', 'tags')
 
 
 class ASNImportForm(NetBoxModelImportForm):
@@ -165,16 +198,31 @@ class PrefixImportForm(NetBoxModelImportForm):
     def __init__(self, data=None, *args, **kwargs):
         super().__init__(data, *args, **kwargs)
 
-        if data:
+        if not data:
+            return
 
-            # Limit VLAN queryset by assigned site and/or group (if specified)
-            params = {}
-            if data.get('site'):
-                params[f"site__{self.fields['site'].to_field_name}"] = data.get('site')
-            if data.get('vlan_group'):
-                params[f"group__{self.fields['vlan_group'].to_field_name}"] = data.get('vlan_group')
-            if params:
-                self.fields['vlan'].queryset = self.fields['vlan'].queryset.filter(**params)
+        site = data.get('site')
+        vlan_group = data.get('vlan_group')
+
+        # Limit VLAN queryset by assigned site and/or group (if specified)
+        query = Q()
+
+        if site:
+            query |= Q(**{
+                f"site__{self.fields['site'].to_field_name}": site
+            })
+            # Don't Forget to include VLANs without a site in the filter
+            query |= Q(**{
+                f"site__{self.fields['site'].to_field_name}__isnull": True
+            })
+
+        if vlan_group:
+            query &= Q(**{
+                f"group__{self.fields['vlan_group'].to_field_name}": vlan_group
+            })
+
+        queryset = self.fields['vlan'].queryset.filter(query)
+        self.fields['vlan'].queryset = queryset
 
 
 class IPRangeImportForm(NetBoxModelImportForm):
@@ -204,7 +252,8 @@ class IPRangeImportForm(NetBoxModelImportForm):
     class Meta:
         model = IPRange
         fields = (
-            'start_address', 'end_address', 'vrf', 'tenant', 'status', 'role', 'description', 'comments', 'tags',
+            'start_address', 'end_address', 'vrf', 'tenant', 'status', 'role', 'mark_utilized', 'description',
+            'comments', 'tags',
         )
 
 
@@ -390,10 +439,6 @@ class VLANImportForm(NetBoxModelImportForm):
     class Meta:
         model = VLAN
         fields = ('site', 'group', 'vid', 'name', 'tenant', 'status', 'role', 'description', 'comments', 'tags')
-        help_texts = {
-            'vid': 'Numeric VLAN ID (1-4094)',
-            'name': 'VLAN name',
-        }
 
 
 class ServiceTemplateImportForm(NetBoxModelImportForm):

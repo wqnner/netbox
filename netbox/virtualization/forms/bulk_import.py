@@ -1,10 +1,11 @@
+from django.utils.translation import gettext as _
+
 from dcim.choices import InterfaceModeChoices
 from dcim.models import Device, DeviceRole, Platform, Site
-from django.utils.translation import gettext as _
 from ipam.models import VRF
 from netbox.forms import NetBoxModelImportForm
 from tenancy.models import Tenant
-from utilities.forms import CSVChoiceField, CSVModelChoiceField, SlugField
+from utilities.forms.fields import CSVChoiceField, CSVModelChoiceField, SlugField
 from virtualization.choices import *
 from virtualization.models import *
 
@@ -64,7 +65,7 @@ class ClusterImportForm(NetBoxModelImportForm):
 
     class Meta:
         model = Cluster
-        fields = ('name', 'type', 'group', 'status', 'site', 'description', 'comments', 'tags')
+        fields = ('name', 'type', 'group', 'status', 'site', 'tenant', 'description', 'comments', 'tags')
 
 
 class VirtualMachineImportForm(NetBoxModelImportForm):

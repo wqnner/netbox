@@ -44,10 +44,6 @@
                     <th scope="row">Site</th>
                     <td>{{ object.site|linkify|placeholder }}</td>
                 </tr>
-                <tr>
-                    <th scope="row">Virtual Machines</th>
-                    <td><a href="{% url 'virtualization:virtualmachine_list' %}?cluster_id={{ object.pk }}">{{ object.virtual_machines.count }}</a></td>
-                </tr>
             </table>
         </div>
     </div>
@@ -88,7 +84,6 @@
   </div>
     {% include 'inc/panels/custom_fields.html' %}
     {% include 'inc/panels/tags.html' %}
-    {% include 'inc/panels/contacts.html' %}
     {% plugin_right_page object %}
   </div>
 </div>
