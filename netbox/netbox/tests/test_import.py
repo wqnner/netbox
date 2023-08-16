@@ -240,8 +240,8 @@ class CSVImportTestCase(ModelViewTestCase):
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_invalid_header_csv(self):
         csv_data = (
-            'name,slug,tags,xxx',
-            'Region 1,region-1,"alpha,bravo",yyy',
+            'name,slug,xxx',
+            'Region 1,region-1,yyy',
         )
 
         data = {
@@ -263,8 +263,8 @@ class CSVImportTestCase(ModelViewTestCase):
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_invalid_header_yaml(self):
         csv_data = (
-            'name,slug,tags,xxx',
-            'Region 1,region-1,"alpha,bravo",yyy',
+            'name,slug,xxx',
+            'Region 1,region-1,yyy',
         )
 
         data = {
@@ -286,8 +286,8 @@ class CSVImportTestCase(ModelViewTestCase):
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
     def test_invalid_header_json(self):
         csv_data = (
-            'name,slug,tags,xxx',
-            'Region 1,region-1,"alpha,bravo",yyy',
+            'name,slug,xxx',
+            'Region 1,region-1,yyy',
         )
 
         data = {

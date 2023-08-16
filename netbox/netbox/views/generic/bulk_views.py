@@ -404,8 +404,13 @@ class BulkImportView(GetReturnURLMixin, BaseMultiObjectView):
             required_fields = [
                 name for name, field in form_fields.items() if field.required
             ]
+
             if not headers:
-                headers = headers_to_dict(list(record.keys()))
+                keys = list(record.keys())
+                if object_id:
+                    keys.append("id")
+                headers = headers_to_dict(keys)
+
             validate_import_headers(headers, form_fields, required_fields, allow_extra_columns=isinstance(model_form, (DeviceTypeImportForm, ModuleTypeImportForm)))
 
             # When updating, omit all form fields other than those specified in the record. (No
