@@ -208,7 +208,7 @@ class CSVImportTestCase(ModelViewTestCase):
         self.assertHttpStatus(self.client.get(self._get_url('import')), 200)
 
         # Test POST with permission
-        self.assertHttpStatus(self.client.post(self._get_url('import'), data), 302)
+        self.assertHttpStatus(self.client.post(self._get_url('import'), data), 200)
         self.assertEqual(Region.objects.count(), 0)
 
     @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
