@@ -516,6 +516,7 @@ class L2VPNSerializer(NetBoxModelSerializer):
 class L2VPNTerminationSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='ipam-api:l2vpntermination-detail')
     l2vpn = NestedL2VPNSerializer()
+    device = NestedDeviceSerializer(required=False)
     assigned_object_type = ContentTypeField(
         queryset=ContentType.objects.all()
     )
@@ -524,7 +525,7 @@ class L2VPNTerminationSerializer(NetBoxModelSerializer):
     class Meta:
         model = L2VPNTermination
         fields = [
-            'id', 'url', 'display', 'l2vpn', 'assigned_object_type', 'assigned_object_id',
+            'id', 'url', 'display', 'l2vpn', 'device', 'assigned_object_type', 'assigned_object_id',
             'assigned_object', 'tags', 'custom_fields', 'created', 'last_updated'
         ]
 

@@ -1090,6 +1090,16 @@ class L2VPNTerminationTest(APIViewTestCases.APIViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
+        site = Site.objects.create(name='Site 1', slug='site-1')
+        manufacturer = Manufacturer.objects.create(name='Manufacturer 1', slug='manufacturer-1')
+        devicetype = DeviceType.objects.create(manufacturer=manufacturer, model='Device Type 1')
+        role = DeviceRole.objects.create(name='Device Role 1', slug='device-role-1')
+
+        devices = (
+            Device(name='Device 1', site=site, device_type=devicetype, role=role),
+            Device(name='Device 2', site=site, device_type=devicetype, role=role),
+        )
+        Device.objects.bulk_create(devices)
 
         vlans = (
             VLAN(name='VLAN 1', vid=651),
@@ -1112,7 +1122,7 @@ class L2VPNTerminationTest(APIViewTestCases.APIViewTestCase):
         l2vpnterminations = (
             L2VPNTermination(l2vpn=l2vpns[0], assigned_object=vlans[0]),
             L2VPNTermination(l2vpn=l2vpns[0], assigned_object=vlans[1]),
-            L2VPNTermination(l2vpn=l2vpns[0], assigned_object=vlans[2])
+            L2VPNTermination(device=devices[0], l2vpn=l2vpns[0], assigned_object=vlans[2])
         )
         L2VPNTermination.objects.bulk_create(l2vpnterminations)
 
@@ -1129,6 +1139,7 @@ class L2VPNTerminationTest(APIViewTestCases.APIViewTestCase):
             },
             {
                 'l2vpn': l2vpns[0].pk,
+                'device': devices[1].pk,
                 'assigned_object_type': 'ipam.vlan',
                 'assigned_object_id': vlans[5].pk,
             },

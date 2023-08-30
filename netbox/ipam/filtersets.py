@@ -1131,16 +1131,15 @@ class L2VPNTerminationFilterSet(NetBoxModelFilterSet):
         field_name='pk',
         label=_('Site (ID)'),
     )
-    device = django_filters.ModelMultipleChoiceFilter(
-        field_name='interface__device__name',
-        queryset=Device.objects.all(),
-        to_field_name='name',
+    device = MultiValueCharFilter(
         label=_('Device (name)'),
+        field_name='name',
+        method='filter_device',
     )
-    device_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='interface__device',
-        queryset=Device.objects.all(),
+    device_id = MultiValueNumberFilter(
         label=_('Device (ID)'),
+        field_name='pk',
+        method='filter_device',
     )
     virtual_machine = django_filters.ModelMultipleChoiceFilter(
         field_name='vminterface__virtual_machine__name',
@@ -1226,4 +1225,14 @@ class L2VPNTerminationFilterSet(NetBoxModelFilterSet):
                 Q(**{'vminterface__virtual_machine__site__region__{}__in'.format(name): value})
             )
         )
+        return qs
+
+    def filter_device(self, queryset, name, value):
+        qs = queryset.filter(
+            Q(
+                Q(**{'device__{}__in'.format(name): value}) |
+                Q(**{'interface__device__{}__in'.format(name): value})
+            )
+        )
+
         return qs

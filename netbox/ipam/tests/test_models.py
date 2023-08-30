@@ -1,5 +1,6 @@
 from netaddr import IPNetwork, IPSet
 from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from django.test import TestCase, override_settings
 
 from dcim.models import Interface, Device, DeviceRole, DeviceType, Manufacturer, Site
@@ -595,6 +596,32 @@ class TestL2VPNTermination(TestCase):
 
         L2VPNTermination.objects.bulk_create(l2vpnterminations)
 
+    def test_vlan_device_creation(self):
+        device = Device.objects.first()
+        vlan = Interface.objects.first()
+        l2vpn = L2VPN.objects.first()
+        termination = L2VPNTermination.objects.first()
+
+        termination.device = device
+        termination.save()
+
+        device = Device.objects.last()
+
+        L2VPNTermination.objects.create(device=device, l2vpn=l2vpn, assigned_object=vlan)
+
+        self.assertEqual(L2VPNTermination.objects.all().count(), 4)
+
+    def test_duplicate_vlan_device_creation(self):
+        device = Device.objects.first()
+        vlan = Interface.objects.first()
+        l2vpn = L2VPN.objects.first()
+
+        L2VPNTermination.objects.create(device=device, l2vpn=l2vpn, assigned_object=vlan)
+
+        duplicate = L2VPNTermination(device=device, l2vpn=l2vpn, assigned_object=vlan)
+        self.assertRaises(ValidationError, duplicate.clean)
+        self.assertRaises(IntegrityError, duplicate.save)
+
     def test_duplicate_interface_terminations(self):
         device = Device.objects.first()
         interface = Interface.objects.filter(device=device).first()
@@ -604,11 +631,12 @@ class TestL2VPNTermination(TestCase):
         duplicate = L2VPNTermination(l2vpn=l2vpn, assigned_object=interface)
 
         self.assertRaises(ValidationError, duplicate.clean)
+        self.assertRaises(IntegrityError, duplicate.save)
 
     def test_duplicate_vlan_terminations(self):
-        vlan = Interface.objects.first()
+        vlan = VLAN.objects.first()
         l2vpn = L2VPN.objects.first()
 
-        L2VPNTermination.objects.create(l2vpn=l2vpn, assigned_object=vlan)
         duplicate = L2VPNTermination(l2vpn=l2vpn, assigned_object=vlan)
         self.assertRaises(ValidationError, duplicate.clean)
+        self.assertRaises(IntegrityError, duplicate.save)

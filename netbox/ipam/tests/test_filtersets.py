@@ -1710,7 +1710,7 @@ class L2VPNTerminationTestCase(TestCase, ChangeLoggedFilterSetTests):
         l2vpnterminations = (
             L2VPNTermination(l2vpn=l2vpns[0], assigned_object=vlans[0]),
             L2VPNTermination(l2vpn=l2vpns[1], assigned_object=vlans[1]),
-            L2VPNTermination(l2vpn=l2vpns[2], assigned_object=vlans[2]),
+            L2VPNTermination(device=device, l2vpn=l2vpns[2], assigned_object=vlans[2]),
             L2VPNTermination(l2vpn=l2vpns[0], assigned_object=interfaces[0]),
             L2VPNTermination(l2vpn=l2vpns[1], assigned_object=interfaces[1]),
             L2VPNTermination(l2vpn=l2vpns[2], assigned_object=interfaces[2]),
@@ -1758,9 +1758,9 @@ class L2VPNTerminationTestCase(TestCase, ChangeLoggedFilterSetTests):
     def test_device(self):
         device = Device.objects.all().first()
         params = {'device_id': [device.pk]}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 3)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
         params = {'device': ['Device 1']}
-        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 3)
+        self.assertEqual(self.filterset(params, self.queryset).qs.count(), 4)
 
     def test_virtual_machine(self):
         virtual_machine = VirtualMachine.objects.all().first()

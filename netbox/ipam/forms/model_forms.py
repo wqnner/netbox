@@ -794,6 +794,12 @@ class L2VPNTerminationForm(NetBoxModelForm):
         label=_('L2VPN'),
         fetch_trigger='open'
     )
+    device = DynamicModelChoiceField(
+        queryset=Device.objects.all(),
+        required=False,
+        selector=True,
+        label=_('Device')
+    )
     vlan = DynamicModelChoiceField(
         queryset=VLAN.objects.all(),
         required=False,
@@ -815,7 +821,7 @@ class L2VPNTerminationForm(NetBoxModelForm):
 
     class Meta:
         model = L2VPNTermination
-        fields = ('l2vpn', )
+        fields = ('l2vpn', 'device')
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.get('instance')

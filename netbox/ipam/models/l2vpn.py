@@ -85,6 +85,13 @@ class L2VPNTermination(NetBoxModel):
         on_delete=models.CASCADE,
         related_name='terminations'
     )
+    device = models.ForeignKey(
+        to='dcim.Device',
+        on_delete=models.CASCADE,
+        related_name='l2vpns',
+        null=True,
+        blank=True,
+    )
     assigned_object_type = models.ForeignKey(
         to=ContentType,
         limit_choices_to=L2VPN_ASSIGNMENT_MODELS,
@@ -106,8 +113,14 @@ class L2VPNTermination(NetBoxModel):
         ordering = ('l2vpn',)
         constraints = (
             models.UniqueConstraint(
+                fields=('device', 'assigned_object_type', 'assigned_object_id'),
+                name='ipam_l2vpntermination_device_assigned_object',
+            ),
+            models.UniqueConstraint(
                 fields=('assigned_object_type', 'assigned_object_id'),
-                name='ipam_l2vpntermination_assigned_object'
+                name='ipam_l2vpntermination_assigned_object',
+                condition=models.Q(('device__isnull', True)),
+                violation_error_message=_("This object is already assigned to this l2vpn without a device specified")
             ),
         )
         verbose_name = _('L2VPN termination')
@@ -115,6 +128,8 @@ class L2VPNTermination(NetBoxModel):
 
     def __str__(self):
         if self.pk is not None:
+            if self.device is not None:
+                return f'{self.assigned_object} ({self.device}) <> {self.l2vpn}'
             return f'{self.assigned_object} <> {self.l2vpn}'
         return super().__str__()
 
@@ -126,10 +141,22 @@ class L2VPNTermination(NetBoxModel):
         if self.assigned_object:
             obj_id = self.assigned_object.pk
             obj_type = ContentType.objects.get_for_model(self.assigned_object)
-            if L2VPNTermination.objects.filter(assigned_object_id=obj_id, assigned_object_type=obj_type).\
-                    exclude(pk=self.pk).count() > 0:
+            if L2VPNTermination.objects.filter(
+                    device__isnull=True,
+                    assigned_object_id=obj_id,
+                    assigned_object_type=obj_type
+            ).exclude(pk=self.pk).count() > 0:
                 raise ValidationError(
                     _('L2VPN Termination already assigned ({assigned_object})').format(
+                        assigned_object=self.assigned_object
+                    )
+                )
+            elif L2VPNTermination.objects.filter(
+                    models.Q(device=self.device, assigned_object_id=obj_id, assigned_object_type=obj_type) |
+                    models.Q(device__isnull=True, assigned_object_id=obj_id, assigned_object_type=obj_type)
+            ).exclude(pk=self.pk).count() > 0:
+                raise ValidationError(
+                    _('L2VPN Termination already assigned to this device ({assigned_object})').format(
                         assigned_object=self.assigned_object
                     )
                 )
