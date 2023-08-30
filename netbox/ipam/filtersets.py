@@ -303,26 +303,26 @@ class PrefixFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Site.objects.all(),
         label=_('Site (ID)'),
@@ -890,26 +890,26 @@ class VLANFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Site.objects.all(),
         label=_('Site (ID)'),

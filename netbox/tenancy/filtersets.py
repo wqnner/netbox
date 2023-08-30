@@ -1,6 +1,8 @@
 import django_filters
 from django.db.models import Q
 from django.utils.translation import gettext as _
+from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.types import OpenApiTypes
 
 from extras.filters import TagFilter
 from netbox.filtersets import ChangeLoggedModelFilterSet, OrganizationalModelFilterSet, NetBoxModelFilterSet
@@ -55,13 +57,13 @@ class ContactFilterSet(NetBoxModelFilterSet):
         lookup_expr='in',
         label=_('Contact group (ID)'),
     )
-    group = TreeNodeMultipleChoiceFilter(
+    group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=ContactGroup.objects.all(),
         field_name='group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Contact group (slug)'),
-    )
+    ))
 
     class Meta:
         model = Contact
@@ -127,12 +129,12 @@ class ContactModelFilterSet(django_filters.FilterSet):
         queryset=ContactRole.objects.all(),
         label=_('Contact Role')
     )
-    contact_group = TreeNodeMultipleChoiceFilter(
+    contact_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=ContactGroup.objects.all(),
         field_name='contacts__contact__group',
         lookup_expr='in',
         label=_('Contact group'),
-    )
+    ))
 
 
 #
@@ -163,13 +165,13 @@ class TenantFilterSet(NetBoxModelFilterSet, ContactModelFilterSet):
         lookup_expr='in',
         label=_('Tenant group (ID)'),
     )
-    group = TreeNodeMultipleChoiceFilter(
+    group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=TenantGroup.objects.all(),
         field_name='group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Tenant group (slug)'),
-    )
+    ))
 
     class Meta:
         model = Tenant
@@ -196,13 +198,13 @@ class TenancyFilterSet(django_filters.FilterSet):
         lookup_expr='in',
         label=_('Tenant Group (ID)'),
     )
-    tenant_group = TreeNodeMultipleChoiceFilter(
+    tenant_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=TenantGroup.objects.all(),
         field_name='tenant__group',
         to_field_name='slug',
         lookup_expr='in',
         label=_('Tenant Group (slug)'),
-    )
+    ))
     tenant_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Tenant.objects.all(),
         label=_('Tenant (ID)'),

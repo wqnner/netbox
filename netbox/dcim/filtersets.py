@@ -1,6 +1,8 @@
 import django_filters
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext as _
+from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.types import OpenApiTypes
 
 from extras.filtersets import LocalConfigContextFilterSet
 from extras.models import ConfigTemplate
@@ -117,24 +119,24 @@ class SiteFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilterSe
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='group',
         lookup_expr='in',
         label=_('Group (ID)'),
     )
-    group = TreeNodeMultipleChoiceFilter(
+    group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         lookup_expr='in',
         to_field_name='slug',
         label=_('Group (slug)'),
-    )
+    ))
     asn = django_filters.ModelMultipleChoiceFilter(
         field_name='asns__asn',
         queryset=ASN.objects.all(),
@@ -178,26 +180,26 @@ class LocationFilterSet(TenancyFilterSet, ContactModelFilterSet, OrganizationalM
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Site.objects.all(),
         label=_('Site (ID)'),
@@ -214,13 +216,13 @@ class LocationFilterSet(TenancyFilterSet, ContactModelFilterSet, OrganizationalM
         lookup_expr='in',
         label=_('Location (ID)'),
     )
-    parent = TreeNodeMultipleChoiceFilter(
+    parent = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Location.objects.all(),
         field_name='parent',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Location (slug)'),
-    )
+    ))
     status = django_filters.MultipleChoiceFilter(
         choices=LocationStatusChoices,
         null_value=None
@@ -253,26 +255,26 @@ class RackFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilterSe
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Site.objects.all(),
         label=_('Site (ID)'),
@@ -289,13 +291,13 @@ class RackFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilterSe
         lookup_expr='in',
         label=_('Location (ID)'),
     )
-    location = TreeNodeMultipleChoiceFilter(
+    location = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Location.objects.all(),
         field_name='location',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Location (slug)'),
-    )
+    ))
     status = django_filters.MultipleChoiceFilter(
         choices=RackStatusChoices,
         null_value=None
@@ -361,39 +363,39 @@ class RackReservationFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='rack__site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='rack__site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='rack__site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     location_id = TreeNodeMultipleChoiceFilter(
         queryset=Location.objects.all(),
         field_name='rack__location',
         lookup_expr='in',
         label=_('Location (ID)'),
     )
-    location = TreeNodeMultipleChoiceFilter(
+    location = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Location.objects.all(),
         field_name='rack__location',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Location (slug)'),
-    )
+    ))
     user_id = django_filters.ModelMultipleChoiceFilter(
         queryset=get_user_model().objects.all(),
         label=_('User (ID)'),
@@ -871,26 +873,26 @@ class DeviceFilterSet(NetBoxModelFilterSet, TenancyFilterSet, ContactModelFilter
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Site.objects.all(),
         label=_('Site (ID)'),
@@ -1177,26 +1179,26 @@ class DeviceComponentFilterSet(django_filters.FilterSet):
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='device__site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='device__site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='device__site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         field_name='device__site',
         queryset=Site.objects.all(),
@@ -1672,26 +1674,26 @@ class VirtualChassisFilterSet(NetBoxModelFilterSet):
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='master__site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='master__site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='master__site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         field_name='master__site',
         queryset=Site.objects.all(),
@@ -1828,26 +1830,26 @@ class PowerPanelFilterSet(NetBoxModelFilterSet, ContactModelFilterSet):
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Site.objects.all(),
         label=_('Site (ID)'),
@@ -1885,26 +1887,26 @@ class PowerFeedFilterSet(NetBoxModelFilterSet, CabledObjectFilterSet, PathEndpoi
         lookup_expr='in',
         label=_('Region (ID)'),
     )
-    region = TreeNodeMultipleChoiceFilter(
+    region = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=Region.objects.all(),
         field_name='power_panel__site__region',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Region (slug)'),
-    )
+    ))
     site_group_id = TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='power_panel__site__group',
         lookup_expr='in',
         label=_('Site group (ID)'),
     )
-    site_group = TreeNodeMultipleChoiceFilter(
+    site_group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=SiteGroup.objects.all(),
         field_name='power_panel__site__group',
         lookup_expr='in',
         to_field_name='slug',
         label=_('Site group (slug)'),
-    )
+    ))
     site_id = django_filters.ModelMultipleChoiceFilter(
         field_name='power_panel__site',
         queryset=Site.objects.all(),

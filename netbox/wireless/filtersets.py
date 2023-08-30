@@ -1,5 +1,7 @@
 import django_filters
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.types import OpenApiTypes
 
 from dcim.choices import LinkStatusChoices
 from ipam.models import VLAN
@@ -37,12 +39,12 @@ class WirelessLANFilterSet(NetBoxModelFilterSet, TenancyFilterSet):
         field_name='group',
         lookup_expr='in'
     )
-    group = TreeNodeMultipleChoiceFilter(
+    group = extend_schema_field(OpenApiTypes.STR)(TreeNodeMultipleChoiceFilter(
         queryset=WirelessLANGroup.objects.all(),
         field_name='group',
         lookup_expr='in',
         to_field_name='slug'
-    )
+    ))
     status = django_filters.MultipleChoiceFilter(
         choices=WirelessLANStatusChoices
     )
