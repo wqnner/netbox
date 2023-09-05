@@ -40,11 +40,12 @@ class DynamicMultipleChoiceField(forms.MultipleChoiceField):
     def get_bound_field(self, form, field_name):
         bound_field = BoundField(form, self, field_name)
         data = bound_field.value()
-
         if data is not None:
             self.choices = [
-                choice for choice in self.choices if choice[0] in data
+                choice for choice in self.choices if choice[0] and choice[0] in data
             ]
+        else:
+            self.choices = []
 
         return bound_field
 
