@@ -11,6 +11,7 @@
     <div class="row mb-2">
       <h5 class="offset-sm-3">{% trans "A Side" %}</h5>
     </div>
+    {% render_field form.termination_a_termination_type %}
     {% if 'termination_a_device' in form.fields %}
       {% render_field form.termination_a_device %}
     {% endif %}
@@ -28,6 +29,7 @@
     <div class="row mb-2">
       <h5 class="offset-sm-3">{% trans "B Side" %}</h5>
     </div>
+    {% render_field form.termination_b_termination_type %}
     {% if 'termination_b_device' in form.fields %}
       {% render_field form.termination_b_device %}
     {% endif %}

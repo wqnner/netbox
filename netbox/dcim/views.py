@@ -3184,7 +3184,8 @@ class CableView(generic.ObjectView):
 @register_model_view(Cable, 'edit')
 class CableEditView(generic.ObjectEditView):
     queryset = Cable.objects.all()
-    template_name = 'dcim/cable_edit.html'
+    # template_name = 'dcim/cable_edit.html'
+    form = forms.CableForm
 
     def dispatch(self, request, *args, **kwargs):
 
@@ -3213,6 +3214,11 @@ class CableEditView(generic.ObjectEditView):
             self.form = forms.get_cable_form(a_type, b_type)
 
         return obj
+
+    def get_form_kwargs(self):
+        kwargs = super(MyFormView, self).get_form_kwargs()
+        # kwargs['user'] = self.request.user
+        return kwargs
 
     def get_extra_addanother_params(self, request):
 

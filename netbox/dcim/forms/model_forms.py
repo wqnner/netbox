@@ -11,7 +11,7 @@ from extras.models import ConfigTemplate
 from ipam.models import ASN, IPAddress, VLAN, VLANGroup, VRF
 from netbox.forms import NetBoxModelForm
 from tenancy.forms import TenancyForm
-from utilities.forms import BootstrapMixin, add_blank_choice
+from utilities.forms import BootstrapMixin, add_blank_choice, get_field_value
 from utilities.forms.fields import (
     CommentField, ContentTypeChoiceField, DynamicModelChoiceField, DynamicModelMultipleChoiceField, JSONField,
     NumericArrayField, SlugField,
@@ -621,6 +621,29 @@ class CableForm(TenancyForm, NetBoxModelForm):
                 'max_value': _('Maximum length is 32767 (any unit)')
             }
         }
+
+    @property
+    def fieldsets(self):
+        a_type = get_field_value(self, 'termination_a_termination_type')
+        b_type = get_field_value(self, 'termination_b_termination_type')
+
+        print(f"a_type: {a_type}")
+        fieldsets = []
+        if a_type in ('consoleport', 'consoleserverport', 'interface', 'frontport', 'rearport', 'poweroutlet', 'powerport'):
+            fieldsets.extend([(_('A Side'), ('termination_a_termination_type', 'termination_a_device', 'a_terminations',)),])
+        elif a_type == 'powerfeed':
+            fieldsets.extend([(_('A Side'), ('termination_a_termination_type', 'termination_a_powerpanel', 'a_terminations',)),])
+        elif a_type == 'circuittermination':
+            fieldsets.extend([(_('A Side'), ('termination_a_termination_type', 'termination_a_circuit', 'a_terminations',)),])
+
+        fieldsets.extend([
+            (_('Cable'), ('status', 'type', 'label', 'description', 'color', 'length', 'length_unit', 'tags',)),
+            (_('Tenancy'), ('tenant_group', 'tenant')),
+        ])
+        return fieldsets
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class PowerPanelForm(NetBoxModelForm):
