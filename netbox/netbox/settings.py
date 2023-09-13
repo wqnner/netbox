@@ -25,7 +25,7 @@ from netbox.constants import RQ_QUEUE_DEFAULT, RQ_QUEUE_HIGH, RQ_QUEUE_LOW
 # Environment setup
 #
 
-VERSION = '3.5.9-dev'
+VERSION = '3.6.2-dev'
 
 # Hostname
 HOSTNAME = platform.node()
@@ -99,6 +99,18 @@ DATE_FORMAT = getattr(configuration, 'DATE_FORMAT', 'N j, Y')
 DATETIME_FORMAT = getattr(configuration, 'DATETIME_FORMAT', 'N j, Y g:i a')
 DEBUG = getattr(configuration, 'DEBUG', False)
 DEFAULT_DASHBOARD = getattr(configuration, 'DEFAULT_DASHBOARD', None)
+DEFAULT_PERMISSIONS = getattr(configuration, 'DEFAULT_PERMISSIONS', {
+    # Permit users to manage their own bookmarks
+    'extras.view_bookmark': ({'user': '$user'},),
+    'extras.add_bookmark': ({'user': '$user'},),
+    'extras.change_bookmark': ({'user': '$user'},),
+    'extras.delete_bookmark': ({'user': '$user'},),
+    # Permit users to manage their own API tokens
+    'users.view_token': ({'user': '$user'},),
+    'users.add_token': ({'user': '$user'},),
+    'users.change_token': ({'user': '$user'},),
+    'users.delete_token': ({'user': '$user'},),
+})
 DEVELOPER = getattr(configuration, 'DEVELOPER', False)
 DOCS_ROOT = getattr(configuration, 'DOCS_ROOT', os.path.join(os.path.dirname(BASE_DIR), 'docs'))
 EMAIL = getattr(configuration, 'EMAIL', {})
@@ -356,6 +368,7 @@ INSTALLED_APPS = [
     'taggit',
     'timezone_field',
     'core',
+    'account',
     'circuits',
     'dcim',
     'ipam',
@@ -466,7 +479,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EXEMPT_EXCLUDE_MODELS = (
     ('auth', 'group'),
     ('auth', 'user'),
+    ('extras', 'configrevision'),
     ('users', 'objectpermission'),
+    ('users', 'token'),
 )
 
 # All URLs starting with a string listed here are exempt from login enforcement
@@ -481,6 +496,7 @@ AUTH_EXEMPT_PATHS = (
 # All URLs starting with a string listed here are exempt from maintenance mode enforcement
 MAINTENANCE_EXEMPT_PATHS = (
     f'/{BASE_PATH}admin/',
+    f'/{BASE_PATH}extras/config-revisions/',  # Allow modifying the configuration
 )
 
 SERIALIZATION_MODULES = {
@@ -694,6 +710,10 @@ RQ_QUEUES.update({
 #
 # Localization
 #
+
+LOCALE_PATHS = (
+    BASE_DIR + '/translations',
+)
 
 if not ENABLE_LOCALIZATION:
     USE_I18N = False

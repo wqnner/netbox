@@ -1,5 +1,6 @@
 import csv
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ForeignKey
@@ -11,7 +12,7 @@ from extras.models import ObjectChange, CustomField
 from netbox.models import CustomFieldsMixin
 from netbox.models.features import ChangeLoggingMixin
 from users.models import ObjectPermission
-from utilities.choices import ImportFormatChoices
+from utilities.choices import CSVDelimiterChoices, ImportFormatChoices
 from .base import ModelTestCase
 from .utils import disable_warnings, post_data
 
@@ -113,10 +114,16 @@ class ViewTestCases:
         def test_get_object_anonymous(self):
             # Make the request as an unauthenticated user
             self.client.logout()
-            response = self.client.get(self._get_queryset().first().get_absolute_url())
-            self.assertHttpStatus(response, 200)
+            ct = ContentType.objects.get_for_model(self.model)
+            if (ct.app_label, ct.model) in settings.EXEMPT_EXCLUDE_MODELS:
+                # Models listed in EXEMPT_EXCLUDE_MODELS should not be accessible to anonymous users
+                with disable_warnings('django.request'):
+                    response = self.client.get(self._get_queryset().first().get_absolute_url())
+                    self.assertHttpStatus(response, 302)
+            else:
+                response = self.client.get(self._get_queryset().first().get_absolute_url())
+                self.assertHttpStatus(response, 200)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_get_object_without_permission(self):
             instance = self._get_queryset().first()
 
@@ -124,7 +131,6 @@ class ViewTestCases:
             with disable_warnings('django.request'):
                 self.assertHttpStatus(self.client.get(instance.get_absolute_url()), 403)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_get_object_with_permission(self):
             instance = self._get_queryset().first()
 
@@ -140,7 +146,6 @@ class ViewTestCases:
             # Try GET with model-level permission
             self.assertHttpStatus(self.client.get(instance.get_absolute_url()), 200)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_get_object_with_constrained_permission(self):
             instance1, instance2 = self._get_queryset().all()[:2]
 
@@ -177,6 +182,7 @@ class ViewTestCases:
         :form_data: Data to be used when creating a new object.
         """
         form_data = {}
+        validation_excluded_fields = []
 
         def test_create_object_without_permission(self):
 
@@ -195,7 +201,6 @@ class ViewTestCases:
 
         @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
         def test_create_object_with_permission(self):
-            initial_count = self._get_queryset().count()
 
             # Assign unconstrained permission
             obj_perm = ObjectPermission(
@@ -213,6 +218,7 @@ class ViewTestCases:
             form_data = add_custom_field_data(self.form_data, self.model)
 
             # Try POST with model-level permission
+            initial_count = self._get_queryset().count()
             request = {
                 'path': self._get_url('add'),
                 'data': post_data(form_data),
@@ -220,19 +226,19 @@ class ViewTestCases:
             self.assertHttpStatus(self.client.post(**request), 302)
             self.assertEqual(initial_count + 1, self._get_queryset().count())
             instance = self._get_queryset().order_by('pk').last()
-            self.assertInstanceEqual(instance, self.form_data)
+            self.assertInstanceEqual(instance, self.form_data, exclude=self.validation_excluded_fields)
 
             # Verify ObjectChange creation
-            objectchanges = ObjectChange.objects.filter(
-                changed_object_type=ContentType.objects.get_for_model(instance),
-                changed_object_id=instance.pk
-            )
-            self.assertEqual(len(objectchanges), 1)
-            self.assertEqual(objectchanges[0].action, ObjectChangeActionChoices.ACTION_CREATE)
+            if issubclass(instance.__class__, ChangeLoggingMixin):
+                objectchanges = ObjectChange.objects.filter(
+                    changed_object_type=ContentType.objects.get_for_model(instance),
+                    changed_object_id=instance.pk
+                )
+                self.assertEqual(len(objectchanges), 1)
+                self.assertEqual(objectchanges[0].action, ObjectChangeActionChoices.ACTION_CREATE)
 
         @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
         def test_create_object_with_constrained_permission(self):
-            initial_count = self._get_queryset().count()
 
             # Assign constrained permission
             obj_perm = ObjectPermission(
@@ -248,6 +254,7 @@ class ViewTestCases:
             self.assertHttpStatus(self.client.get(self._get_url('add')), 200)
 
             # Try to create an object (not permitted)
+            initial_count = self._get_queryset().count()
             request = {
                 'path': self._get_url('add'),
                 'data': post_data(self.form_data),
@@ -266,7 +273,8 @@ class ViewTestCases:
             }
             self.assertHttpStatus(self.client.post(**request), 302)
             self.assertEqual(initial_count + 1, self._get_queryset().count())
-            self.assertInstanceEqual(self._get_queryset().order_by('pk').last(), self.form_data)
+            instance = self._get_queryset().order_by('pk').last()
+            self.assertInstanceEqual(instance, self.form_data, exclude=self.validation_excluded_fields)
 
     class EditObjectViewTestCase(ModelViewTestCase):
         """
@@ -275,6 +283,7 @@ class ViewTestCases:
         :form_data: Data to be used when updating the first existing object.
         """
         form_data = {}
+        validation_excluded_fields = []
 
         def test_edit_object_without_permission(self):
             instance = self._get_queryset().first()
@@ -316,15 +325,17 @@ class ViewTestCases:
                 'data': post_data(form_data),
             }
             self.assertHttpStatus(self.client.post(**request), 302)
-            self.assertInstanceEqual(self._get_queryset().get(pk=instance.pk), self.form_data)
+            instance = self._get_queryset().get(pk=instance.pk)
+            self.assertInstanceEqual(instance, self.form_data, exclude=self.validation_excluded_fields)
 
             # Verify ObjectChange creation
-            objectchanges = ObjectChange.objects.filter(
-                changed_object_type=ContentType.objects.get_for_model(instance),
-                changed_object_id=instance.pk
-            )
-            self.assertEqual(len(objectchanges), 1)
-            self.assertEqual(objectchanges[0].action, ObjectChangeActionChoices.ACTION_UPDATE)
+            if issubclass(instance.__class__, ChangeLoggingMixin):
+                objectchanges = ObjectChange.objects.filter(
+                    changed_object_type=ContentType.objects.get_for_model(instance),
+                    changed_object_id=instance.pk
+                )
+                self.assertEqual(len(objectchanges), 1)
+                self.assertEqual(objectchanges[0].action, ObjectChangeActionChoices.ACTION_UPDATE)
 
         @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
         def test_edit_object_with_constrained_permission(self):
@@ -352,7 +363,8 @@ class ViewTestCases:
                 'data': post_data(self.form_data),
             }
             self.assertHttpStatus(self.client.post(**request), 302)
-            self.assertInstanceEqual(self._get_queryset().get(pk=instance1.pk), self.form_data)
+            instance = self._get_queryset().get(pk=instance1.pk)
+            self.assertInstanceEqual(instance, self.form_data, exclude=self.validation_excluded_fields)
 
             # Try to edit a non-permitted object
             request = {
@@ -459,17 +471,22 @@ class ViewTestCases:
         def test_list_objects_anonymous(self):
             # Make the request as an unauthenticated user
             self.client.logout()
-            response = self.client.get(self._get_url('list'))
-            self.assertHttpStatus(response, 200)
+            ct = ContentType.objects.get_for_model(self.model)
+            if (ct.app_label, ct.model) in settings.EXEMPT_EXCLUDE_MODELS:
+                # Models listed in EXEMPT_EXCLUDE_MODELS should not be accessible to anonymous users
+                with disable_warnings('django.request'):
+                    response = self.client.get(self._get_url('list'))
+                    self.assertHttpStatus(response, 302)
+            else:
+                response = self.client.get(self._get_url('list'))
+                self.assertHttpStatus(response, 200)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_list_objects_without_permission(self):
 
             # Try GET without permission
             with disable_warnings('django.request'):
                 self.assertHttpStatus(self.client.get(self._get_url('list')), 403)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_list_objects_with_permission(self):
 
             # Add model-level permission
@@ -484,7 +501,6 @@ class ViewTestCases:
             # Try GET with model-level permission
             self.assertHttpStatus(self.client.get(self._get_url('list')), 200)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_list_objects_with_constrained_permission(self):
             instance1, instance2 = self._get_queryset().all()[:2]
 
@@ -505,9 +521,17 @@ class ViewTestCases:
             self.assertIn(instance1.get_absolute_url(), content)
             self.assertNotIn(instance2.get_absolute_url(), content)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=['*'])
         def test_export_objects(self):
             url = self._get_url('list')
+
+            # Add model-level permission
+            obj_perm = ObjectPermission(
+                name='Test permission',
+                actions=['view']
+            )
+            obj_perm.save()
+            obj_perm.users.add(self.user)
+            obj_perm.object_types.add(ContentType.objects.get_for_model(self.model))
 
             # Test default CSV export
             response = self.client.get(f'{url}?export')
@@ -530,7 +554,6 @@ class ViewTestCases:
         bulk_create_data = {}
         validation_excluded_fields = []
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_create_multiple_objects_without_permission(self):
             request = {
                 'path': self._get_url('add'),
@@ -541,7 +564,6 @@ class ViewTestCases:
             with disable_warnings('django.request'):
                 self.assertHttpStatus(self.client.post(**request), 403)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_create_multiple_objects_with_permission(self):
             initial_count = self._get_queryset().count()
             request = {
@@ -565,7 +587,6 @@ class ViewTestCases:
             for instance in self._get_queryset().order_by('-pk')[:self.bulk_create_count]:
                 self.assertInstanceEqual(instance, self.bulk_create_data, exclude=self.validation_excluded_fields)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_create_multiple_objects_with_constrained_permission(self):
             initial_count = self._get_queryset().count()
             request = {
@@ -614,7 +635,8 @@ class ViewTestCases:
         def test_bulk_import_objects_without_permission(self):
             data = {
                 'data': self._get_csv_data(),
-                'format': 'csv',
+                'format': ImportFormatChoices.CSV,
+                'csv_delimiter': CSVDelimiterChoices.AUTO,
             }
 
             # Test GET without permission
@@ -631,7 +653,8 @@ class ViewTestCases:
             initial_count = self._get_queryset().count()
             data = {
                 'data': self._get_csv_data(),
-                'format': 'csv',
+                'format': ImportFormatChoices.CSV,
+                'csv_delimiter': CSVDelimiterChoices.AUTO,
             }
 
             # Assign model-level permission
@@ -660,6 +683,7 @@ class ViewTestCases:
             data = {
                 'format': ImportFormatChoices.CSV,
                 'data': csv_data,
+                'csv_delimiter': CSVDelimiterChoices.AUTO,
             }
 
             # Assign model-level permission
@@ -692,7 +716,8 @@ class ViewTestCases:
             initial_count = self._get_queryset().count()
             data = {
                 'data': self._get_csv_data(),
-                'format': 'csv',
+                'format': ImportFormatChoices.CSV,
+                'csv_delimiter': CSVDelimiterChoices.AUTO,
             }
 
             # Assign constrained permission
@@ -755,7 +780,7 @@ class ViewTestCases:
             # Assign model-level permission
             obj_perm = ObjectPermission(
                 name='Test permission',
-                actions=['change']
+                actions=['view', 'change']
             )
             obj_perm.save()
             obj_perm.users.add(self.user)
@@ -786,7 +811,7 @@ class ViewTestCases:
             obj_perm = ObjectPermission(
                 name='Test permission',
                 constraints={attr_name: value},
-                actions=['change']
+                actions=['view', 'change']
             )
             obj_perm.save()
             obj_perm.users.add(self.user)
@@ -809,7 +834,6 @@ class ViewTestCases:
         """
         Delete multiple instances.
         """
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_bulk_delete_objects_without_permission(self):
             pk_list = self._get_queryset().values_list('pk', flat=True)[:3]
             data = {
@@ -826,7 +850,6 @@ class ViewTestCases:
             with disable_warnings('django.request'):
                 self.assertHttpStatus(self.client.post(self._get_url('bulk_delete'), data), 403)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_bulk_delete_objects_with_permission(self):
             pk_list = self._get_queryset().values_list('pk', flat=True)
             data = {
@@ -848,9 +871,7 @@ class ViewTestCases:
             self.assertHttpStatus(self.client.post(self._get_url('bulk_delete'), data), 302)
             self.assertEqual(self._get_queryset().count(), 0)
 
-        @override_settings(EXEMPT_VIEW_PERMISSIONS=[])
         def test_bulk_delete_objects_with_constrained_permission(self):
-            initial_count = self._get_queryset().count()
             pk_list = self._get_queryset().values_list('pk', flat=True)
             data = {
                 'pk': pk_list,
@@ -869,6 +890,7 @@ class ViewTestCases:
             obj_perm.object_types.add(ContentType.objects.get_for_model(self.model))
 
             # Attempt to bulk delete non-permitted objects
+            initial_count = self._get_queryset().count()
             self.assertHttpStatus(self.client.post(self._get_url('bulk_delete'), data), 302)
             self.assertEqual(self._get_queryset().count(), initial_count)
 
