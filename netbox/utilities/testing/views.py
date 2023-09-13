@@ -1,4 +1,5 @@
 import csv
+import datetime
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -78,6 +79,23 @@ def add_custom_field_data(form_data, model):
 
     return form_data
 
+
+def assert_custom_field_data(test_case, instance):
+    if issubclass(type(instance), CustomFieldsMixin):
+        cf = instance.cf
+        data = {
+            'text_field': 'foo123',
+            'longtext_field': 'ABC123',
+            'integer_field': 456,
+            'decimal_field': 456.12,
+            'boolean_field': True,
+            'date_field': datetime.date(2022, 2, 2),
+            'url_field': 'http://example2.com/1',
+            'json_field': {'x': 'z'},
+            'select_field': 'bar',
+            'multiselect_field': ['bar'],
+        }
+        test_case.assertDictEqual(cf, data)
 
 #
 # UI Tests
@@ -236,6 +254,7 @@ class ViewTestCases:
             self.assertEqual(initial_count + 1, self._get_queryset().count())
             instance = self._get_queryset().order_by('pk').last()
             self.assertInstanceEqual(instance, self.form_data, exclude=self.validation_excluded_fields)
+            assert_custom_field_data(self, instance)
 
             # Verify ObjectChange creation
             if issubclass(instance.__class__, ChangeLoggingMixin):
@@ -336,6 +355,7 @@ class ViewTestCases:
             self.assertHttpStatus(self.client.post(**request), 302)
             instance = self._get_queryset().get(pk=instance.pk)
             self.assertInstanceEqual(instance, self.form_data, exclude=self.validation_excluded_fields)
+            assert_custom_field_data(self, instance)
 
             # Verify ObjectChange creation
             if issubclass(instance.__class__, ChangeLoggingMixin):
