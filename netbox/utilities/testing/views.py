@@ -8,7 +8,7 @@ from django.test import override_settings
 from django.urls import reverse
 
 from extras.choices import ObjectChangeActionChoices, CustomFieldTypeChoices
-from extras.models import ObjectChange, CustomField
+from extras.models import CustomField, CustomFieldChoiceSet, ObjectChange
 from netbox.models import CustomFieldsMixin
 from netbox.models.features import ChangeLoggingMixin
 from users.models import ObjectPermission
@@ -35,26 +35,35 @@ def add_custom_field_data(form_data, model):
             CustomField(type=CustomFieldTypeChoices.TYPE_DATE, name='date_field', default='2020-01-01'),
             CustomField(type=CustomFieldTypeChoices.TYPE_URL, name='url_field', default='http://example.com/1'),
             CustomField(type=CustomFieldTypeChoices.TYPE_JSON, name='json_field', default='{"x": "y"}'),
-            CustomField(
-                type=CustomFieldTypeChoices.TYPE_SELECT,
-                name='select_field',
-                default='Foo',
-                choices=(
-                    'Foo', 'Bar', 'Baz'
-                )
-            ),
-            CustomField(
-                type=CustomFieldTypeChoices.TYPE_MULTISELECT,
-                name='multiselect_field',
-                default=['Foo'],
-                choices=(
-                    'Foo', 'Bar', 'Baz'
-                )
-            ),
         )
         for cf in custom_fields:
             cf.save()
             cf.content_types.set([ContentType.objects.get_for_model(model)])
+
+        choice_set = CustomFieldChoiceSet.objects.create(
+            name='Choice Set 1',
+            extra_choices=(('foo', 'Foo'), ('bar', 'Bar'), ('baz', 'Baz'))
+        )
+
+        # Create a custom field on the Site model
+        ct = ContentType.objects.get_for_model(model)
+
+        cf_select = CustomField(
+            type=CustomFieldTypeChoices.TYPE_SELECT,
+            name='select_field',
+            choice_set=choice_set
+        )
+        cf_select.save()
+        cf_select.content_types.set([ct])
+
+        cf_select = CustomField(
+            type=CustomFieldTypeChoices.TYPE_MULTISELECT,
+            name='multiselect_field',
+            default=['foo'],
+            choice_set=choice_set
+        )
+        cf_select.save()
+        cf_select.content_types.set([ct])
 
         form_data['cf_text_field'] = 'foo123'
         form_data['cf_longtext_field'] = 'ABC123'
@@ -64,8 +73,8 @@ def add_custom_field_data(form_data, model):
         form_data['cf_date_field'] = '2022-02-02'
         form_data['cf_url_field'] = 'http://example2.com/1'
         form_data['cf_json_field'] = '{"x": "z"}'
-        form_data['cf_select_field'] = 'Bar'
-        form_data['cf_multiselect_field'] = ['Bar']
+        form_data['cf_select_field'] = 'bar'
+        form_data['cf_multiselect_field'] = ['bar']
 
     return form_data
 
