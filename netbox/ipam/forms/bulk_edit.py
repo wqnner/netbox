@@ -431,6 +431,10 @@ class VLANGroupBulkEditForm(NetBoxModelBulkEditForm):
         queryset=ContentType.objects.filter(model__in=VLANGROUP_SCOPE_TYPES),
         required=False
     )
+    scope_id = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
     region = DynamicModelChoiceField(
         label=_('Region'),
         queryset=Region.objects.all(),
@@ -487,6 +491,19 @@ class VLANGroupBulkEditForm(NetBoxModelBulkEditForm):
         (_('Scope'), ('scope_type', 'region', 'sitegroup', 'site', 'location', 'rack', 'clustergroup', 'cluster')),
     )
     nullable_fields = ('description',)
+
+    def clean(self):
+        super().clean()
+
+        # Assign scope based on scope_type
+        if self.cleaned_data.get('scope_type'):
+            scope_field = self.cleaned_data['scope_type'].model
+            if scope_obj := self.cleaned_data.get(scope_field):
+                self.cleaned_data['scope_id'] = scope_obj.pk
+                self.changed_data.append('scope_id')
+            else:
+                self.cleaned_data.pop('scope_type')
+                self.changed_data.remove('scope_type')
 
 
 class VLANBulkEditForm(NetBoxModelBulkEditForm):
