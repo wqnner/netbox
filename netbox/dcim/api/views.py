@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
@@ -108,6 +109,18 @@ class RegionViewSet(NetBoxModelViewSet):
     ).prefetch_related('tags')
     serializer_class = serializers.RegionSerializer
     filterset_class = filtersets.RegionFilterSet
+
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
 
 #
