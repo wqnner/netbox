@@ -15,4 +15,5 @@ ADVISORY_LOCK_KEYS = {
     'available-ips': 100200,
     'available-vlans': 100300,
     'available-asns': 100400,
+    'regions': 100500,
 }

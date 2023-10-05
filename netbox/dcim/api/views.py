@@ -1,6 +1,6 @@
-from django.db import transaction
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
+from django_pglocks import advisory_lock
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.decorators import action
@@ -23,7 +23,7 @@ from netbox.api.pagination import StripCountAnnotationsPaginator
 from netbox.api.renderers import TextRenderer
 from netbox.api.viewsets import NetBoxModelViewSet
 from netbox.api.viewsets.mixins import SequentialBulkCreatesMixin
-from netbox.constants import NESTED_SERIALIZER_PREFIX
+from netbox.constants import NESTED_SERIALIZER_PREFIX, ADVISORY_LOCK_KEYS
 from utilities.api import get_serializer_for_model
 from utilities.utils import count_related
 from virtualization.models import VirtualMachine
@@ -110,15 +110,15 @@ class RegionViewSet(NetBoxModelViewSet):
     serializer_class = serializers.RegionSerializer
     filterset_class = filtersets.RegionFilterSet
 
-    @transaction.atomic
+    @advisory_lock(ADVISORY_LOCK_KEYS['regions'])
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-    @transaction.atomic
+    @advisory_lock(ADVISORY_LOCK_KEYS['regions'])
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
-    @transaction.atomic
+    @advisory_lock(ADVISORY_LOCK_KEYS['regions'])
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
