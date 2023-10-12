@@ -15,5 +15,14 @@ ADVISORY_LOCK_KEYS = {
     'available-ips': 100200,
     'available-vlans': 100300,
     'available-asns': 100400,
-    'regions': 100500,
+
+    # MPTT locks
+    'region': 100500,
+    'sitegroup': 100501,
+    'location': 100502,
+    'tenantgroup': 100503,
+    'contactgroup': 100504,
+    'wirelesslangroup': 100505,
+    'inventoryitem': 100506,
+    'inventoryitemtemplate': 100507,
 }
