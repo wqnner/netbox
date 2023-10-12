@@ -1157,7 +1157,7 @@ class ScriptView(ContentTypePermissionRequiredMixin, View):
         return 'extras.view_script'
 
     def get(self, request, module, name):
-        module = get_object_or_404(ScriptModule.objects.restrict(request.user), file_path__startswith=module)
+        module = get_object_or_404(ScriptModule.objects.restrict(request.user), file_path__startswith=module + ".py")
         script = module.scripts[name]()
         form = script.as_form(initial=normalize_querydict(request.GET))
 
