@@ -168,13 +168,13 @@ class MPTTLockedMixin(GenericViewSet):
     """
 
     def create(self, request, *args, **kwargs):
-        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower()]):
+        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower().replace(" ", "")]):
             return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower()]):
+        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower().replace(" ", "")]):
             return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower()]):
+        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower().replace(" ", "")]):
             return super().destroy(request, *args, **kwargs)
