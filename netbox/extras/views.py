@@ -1152,7 +1152,7 @@ class ScriptListView(ContentTypePermissionRequiredMixin, View):
 
 
 def get_script_module(module, request):
-    return get_object_or_404(ScriptModule.objects.restrict(request.user), file_path=f"{module}.py")
+    return get_object_or_404(ScriptModule.objects.restrict(request.user), file_path__regex=f"^{module}\\.")
 
 
 class ScriptView(ContentTypePermissionRequiredMixin, View):
