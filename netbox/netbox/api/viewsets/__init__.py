@@ -161,20 +161,20 @@ class NetBoxModelViewSet(
         return super().perform_destroy(instance)
 
 
-class MPTTLockedMixin(GenericViewSet):
+class MPTTLockedMixin:
     """
     Puts pglock on objects that derive from MPTTModel for parallel API calling.
     Note: If adding this to a view, must add the model name to ADVISORY_LOCK_KEYS
     """
 
     def create(self, request, *args, **kwargs):
-        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower().replace(" ", "")]):
+        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.model_name]):
             return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower().replace(" ", "")]):
+        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.model_name]):
             return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.verbose_name.lower().replace(" ", "")]):
+        with advisory_lock(ADVISORY_LOCK_KEYS[self.queryset.model._meta.model_name]):
             return super().destroy(request, *args, **kwargs)
