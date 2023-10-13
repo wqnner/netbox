@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import EmptyPage
 from django.db.models import Count, Q
-from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponse, Http404
+from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -1152,20 +1152,7 @@ class ScriptListView(ContentTypePermissionRequiredMixin, View):
 
 
 def get_script_module(module, request):
-    modules = ScriptModule.objects.restrict(request.user).filter(file_path__startswith=module)
-    if not modules:
-        raise Http404
-
-    if len(modules) == 1:
-        return modules[0]
-
-    # module is without the ".py" so startswith=module can return multiple if the file_path has
-    # two modules starting with the same characters "test.py" and "testfile.py"
-    for obj in modules:
-        if obj.file_path == module or obj.file_path == module + ".py":
-            return obj
-
-    raise Http404
+    return get_object_or_404(ScriptModule.objects.restrict(request.user), file_path=f"{module}.py")
 
 
 class ScriptView(ContentTypePermissionRequiredMixin, View):

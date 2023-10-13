@@ -1,12 +1,14 @@
 import copy
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from core.forms.mixins import SyncedDataMixin
 from core.models import *
 from netbox.forms import NetBoxModelForm
 from netbox.registry import registry
+from pathlib import Path
 from utilities.forms import get_field_value
 from utilities.forms.fields import CommentField
 from utilities.forms.widgets import HTMXSelect
@@ -88,13 +90,33 @@ class ManagedFileForm(SyncedDataMixin, NetBoxModelForm):
         model = ManagedFile
         fields = ('data_source', 'data_file', 'auto_sync_enabled')
 
+    def _validate_file_extension(self, file):
+        if file:
+            extension = Path(file.name).suffix[1:].lower()
+
+            if extension != "py":
+                raise ValidationError(
+                    "File extension “%(extension)s” is not allowed .py extension is required",
+                    code="invalid_extension",
+                    params={
+                        "extension": extension,
+                    },
+                )
+
     def clean(self):
         super().clean()
 
-        if self.cleaned_data.get('upload_file') and self.cleaned_data.get('data_file'):
+        upload_file = self.cleaned_data['upload_file']
+        data_file = self.cleaned_data['data_file']
+
+        if upload_file and data_file:
+            extension = Path(upload_file.name).suffix[1:].lower()
             raise forms.ValidationError("Cannot upload a file and sync from an existing file")
-        if not self.cleaned_data.get('upload_file') and not self.cleaned_data.get('data_file'):
+        if not upload_file and not data_file:
             raise forms.ValidationError("Must upload a file or select a data file to sync")
+
+        self._validate_file_extension(upload_file)
+        self._validate_file_extension(data_file)
 
         return self.cleaned_data
 
