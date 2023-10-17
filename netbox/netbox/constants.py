@@ -11,18 +11,19 @@ RQ_QUEUE_LOW = 'low'
 # When adding a new key, pick something arbitrary and unique so that it is easily searchable in
 # query logs.
 ADVISORY_LOCK_KEYS = {
+    # Available object locks
     'available-prefixes': 100100,
     'available-ips': 100200,
     'available-vlans': 100300,
     'available-asns': 100400,
 
     # MPTT locks
-    'region': 100500,
-    'sitegroup': 100501,
-    'location': 100502,
-    'tenantgroup': 100503,
-    'contactgroup': 100504,
-    'wirelesslangroup': 100505,
-    'inventoryitem': 100506,
-    'inventoryitemtemplate': 100507,
+    'region': 105100,
+    'sitegroup': 105200,
+    'location': 105300,
+    'tenantgroup': 105400,
+    'contactgroup': 105500,
+    'wirelesslangroup': 105600,
+    'inventoryitem': 105700,
+    'inventoryitemtemplate': 105800,
 }
