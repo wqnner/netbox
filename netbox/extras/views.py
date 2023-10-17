@@ -978,6 +978,10 @@ class ReportListView(ContentTypePermissionRequiredMixin, View):
         })
 
 
+def get_report_module(module, request):
+    return get_object_or_404(ReportModule.objects.restrict(request.user), file_path__regex=f"^{module}\\.")
+
+
 class ReportView(ContentTypePermissionRequiredMixin, View):
     """
     Display a single Report and its associated Job (if any).
@@ -986,7 +990,7 @@ class ReportView(ContentTypePermissionRequiredMixin, View):
         return 'extras.view_report'
 
     def get(self, request, module, name):
-        module = get_object_or_404(ReportModule.objects.restrict(request.user), file_path__startswith=module)
+        module = get_report_module(module, request)
         report = module.reports[name]()
 
         object_type = ContentType.objects.get(app_label='extras', model='reportmodule')
@@ -1007,7 +1011,7 @@ class ReportView(ContentTypePermissionRequiredMixin, View):
         if not request.user.has_perm('extras.run_report'):
             return HttpResponseForbidden()
 
-        module = get_object_or_404(ReportModule.objects.restrict(request.user), file_path__startswith=module)
+        module = get_report_module(module, request)
         report = module.reports[name]()
         form = ReportForm(request.POST, scheduling_enabled=report.scheduling_enabled)
 
@@ -1046,7 +1050,7 @@ class ReportSourceView(ContentTypePermissionRequiredMixin, View):
         return 'extras.view_report'
 
     def get(self, request, module, name):
-        module = get_object_or_404(ReportModule.objects.restrict(request.user), file_path__startswith=module)
+        module = get_report_module(module, request)
         report = module.reports[name]()
 
         return render(request, 'extras/report/source.html', {
@@ -1062,7 +1066,7 @@ class ReportJobsView(ContentTypePermissionRequiredMixin, View):
         return 'extras.view_report'
 
     def get(self, request, module, name):
-        module = get_object_or_404(ReportModule.objects.restrict(request.user), file_path__startswith=module)
+        module = get_report_module(module, request)
         report = module.reports[name]()
 
         object_type = ContentType.objects.get(app_label='extras', model='reportmodule')
