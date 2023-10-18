@@ -22,6 +22,7 @@ __all__ = (
     'ClusterGroupForm',
     'ClusterRemoveDevicesForm',
     'ClusterTypeForm',
+    'VirtualDiskForm',
     'VirtualMachineForm',
     'VMInterfaceForm',
 )
@@ -342,6 +343,31 @@ class VMInterfaceForm(InterfaceCommonForm, NetBoxModelForm):
         widgets = {
             'mode': HTMXSelect(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Disable reassignment of VirtualMachine when editing an existing instance
+        if self.instance.pk:
+            self.fields['virtual_machine'].disabled = True
+
+
+class VirtualDiskForm(NetBoxModelForm):
+    virtual_machine = DynamicModelChoiceField(
+        label=_('Virtual machine'),
+        queryset=VirtualMachine.objects.all(),
+        selector=True
+    )
+
+    fieldsets = (
+        (_(''), ('virtual_machine', 'name', 'size', 'tags')),
+    )
+
+    class Meta:
+        model = VirtualDisk
+        fields = [
+            'virtual_machine', 'name', 'size', 'tags',
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

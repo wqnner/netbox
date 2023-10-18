@@ -16,6 +16,7 @@ __all__ = (
     'ClusterFilterForm',
     'ClusterGroupFilterForm',
     'ClusterTypeFilterForm',
+    'VirtualDiskFilterForm',
     'VirtualMachineFilterForm',
     'VMInterfaceFilterForm',
 )
@@ -219,5 +220,22 @@ class VMInterfaceFilterForm(NetBoxModelFilterSetForm):
         queryset=L2VPN.objects.all(),
         required=False,
         label=_('L2VPN')
+    )
+    tag = TagFilterField(model)
+
+
+class VirtualDiskFilterForm(NetBoxModelFilterSetForm):
+    model = VirtualDisk
+    fieldsets = (
+        (None, ('q', 'filter_id', 'tag')),
+        (_('Virtual Machine'), ('virtual_machine_id')),
+    )
+    virtual_machine_id = DynamicModelMultipleChoiceField(
+        queryset=VirtualMachine.objects.all(),
+        required=False,
+        query_params={
+            'cluster_id': '$cluster_id'
+        },
+        label=_('Virtual machine')
     )
     tag = TagFilterField(model)

@@ -21,7 +21,7 @@ from tenancy.views import ObjectContactsView
 from utilities.utils import count_related
 from utilities.views import ViewTab, register_model_view
 from . import filtersets, forms, tables
-from .models import Cluster, ClusterGroup, ClusterType, VirtualMachine, VMInterface
+from .models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
 
 
 #
@@ -574,3 +574,83 @@ class VirtualMachineBulkAddInterfaceView(generic.BulkComponentCreateView):
 
     def get_required_permission(self):
         return f'virtualization.add_vminterface'
+
+
+#
+# Virtual Disk
+#
+
+class VirtualDiskListView(generic.ObjectListView):
+    queryset = VirtualDisk.objects.all()
+    filterset = filtersets.VirtualDiskFilterSet
+    filterset_form = forms.VirtualDiskFilterForm
+    table = tables.VirtualDiskTable
+
+
+@register_model_view(VirtualDisk)
+class VirtualDiskView(generic.ObjectView):
+    queryset = VirtualDisk.objects.all()
+
+    def get_extra_context(self, request, instance):
+
+        # Get child interfaces
+        child_interfaces = VirtualDisk.objects.restrict(request.user, 'view').filter(parent=instance)
+        child_interfaces_tables = tables.VirtualDiskTable(
+            child_interfaces,
+            exclude=('virtual_machine',),
+            orderable=False
+        )
+
+        # Get assigned VLANs and annotate whether each is tagged or untagged
+        vlans = []
+        if instance.untagged_vlan is not None:
+            vlans.append(instance.untagged_vlan)
+            vlans[0].tagged = False
+        for vlan in instance.tagged_vlans.restrict(request.user).prefetch_related('site', 'group', 'tenant', 'role'):
+            vlan.tagged = True
+            vlans.append(vlan)
+        vlan_table = InterfaceVLANTable(
+            interface=instance,
+            data=vlans,
+            orderable=False
+        )
+
+        return {
+            'child_interfaces_table': child_interfaces_tables,
+            'vlan_table': vlan_table,
+        }
+
+
+# class VirtualDiskCreateView(generic.ComponentCreateView):
+#     queryset = VirtualDisk.objects.all()
+#     form = forms.VirtualDiskCreateForm
+#     model_form = forms.VirtualDiskForm
+
+
+@register_model_view(VirtualDisk, 'edit')
+class VirtualDiskEditView(generic.ObjectEditView):
+    queryset = VirtualDisk.objects.all()
+    form = forms.VirtualDiskForm
+
+
+@register_model_view(VirtualDisk, 'delete')
+class VirtualDiskDeleteView(generic.ObjectDeleteView):
+    queryset = VirtualDisk.objects.all()
+
+
+class VirtualDiskBulkImportView(generic.BulkImportView):
+    queryset = VirtualDisk.objects.all()
+    model_form = forms.VirtualDiskImportForm
+
+
+class VirtualDiskBulkEditView(generic.BulkEditView):
+    queryset = VirtualDisk.objects.all()
+    filterset = filtersets.VirtualDiskFilterSet
+    table = tables.VirtualDiskTable
+    form = forms.VirtualDiskBulkEditForm
+
+
+class VirtualDiskBulkDeleteView(generic.BulkDeleteView):
+    queryset = VirtualDisk.objects.all()
+    filterset = filtersets.VirtualDiskFilterSet
+    table = tables.VirtualDiskTable

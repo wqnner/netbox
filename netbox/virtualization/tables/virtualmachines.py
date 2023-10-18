@@ -4,9 +4,10 @@ from django.utils.translation import gettext_lazy as _
 from dcim.tables.devices import BaseInterfaceTable
 from netbox.tables import NetBoxTable, columns
 from tenancy.tables import ContactsColumnMixin, TenancyColumnsMixin
-from virtualization.models import VirtualMachine, VMInterface
+from virtualization.models import VirtualDisk, VirtualMachine, VMInterface
 
 __all__ = (
+    'VirtualDiskTable',
     'VirtualMachineTable',
     'VirtualMachineVMInterfaceTable',
     'VMInterfaceTable',
@@ -152,6 +153,22 @@ class VirtualMachineVMInterfaceTable(VMInterfaceTable):
             'vrf', 'l2vpn', 'ip_addresses', 'fhrp_groups', 'untagged_vlan', 'tagged_vlans', 'actions',
         )
         default_columns = ('pk', 'name', 'enabled', 'mac_address', 'mtu', 'mode', 'description', 'ip_addresses')
+        row_attrs = {
+            'data-name': lambda record: record.name,
+        }
+
+
+class VirtualDiskTable(VMInterfaceTable):
+    actions = columns.ActionsColumn(
+        actions=('edit', 'delete'),
+    )
+
+    class Meta(NetBoxTable.Meta):
+        model = VirtualDisk
+        fields = (
+            'pk', 'id', 'name', 'size', 'tags', 'actions',
+        )
+        default_columns = ('pk', 'name', 'size')
         row_attrs = {
             'data-name': lambda record: record.name,
         }

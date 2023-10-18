@@ -10,7 +10,7 @@ from netbox.filtersets import OrganizationalModelFilterSet, NetBoxModelFilterSet
 from tenancy.filtersets import TenancyFilterSet, ContactModelFilterSet
 from utilities.filters import MultiValueCharFilter, MultiValueMACAddressFilter, TreeNodeMultipleChoiceFilter
 from .choices import *
-from .models import Cluster, ClusterGroup, ClusterType, VirtualMachine, VMInterface
+from .models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
 
 __all__ = (
     'ClusterFilterSet',
@@ -302,4 +302,29 @@ class VMInterfaceFilterSet(NetBoxModelFilterSet, CommonInterfaceFilterSet):
         return queryset.filter(
             Q(name__icontains=value) |
             Q(description__icontains=value)
+        )
+
+
+class VirtualDiskFilterSet(NetBoxModelFilterSet):
+    virtual_machine_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='virtual_machine',
+        queryset=VirtualMachine.objects.all(),
+        label=_('Virtual machine (ID)'),
+    )
+    virtual_machine = django_filters.ModelMultipleChoiceFilter(
+        field_name='virtual_machine__name',
+        queryset=VirtualMachine.objects.all(),
+        to_field_name='name',
+        label=_('Virtual machine'),
+    )
+
+    class Meta:
+        model = VirtualDisk
+        fields = ['id', 'name', 'size',]
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        return queryset.filter(
+            Q(name__icontains=value)
         )

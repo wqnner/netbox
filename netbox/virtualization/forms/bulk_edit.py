@@ -18,6 +18,7 @@ __all__ = (
     'ClusterBulkEditForm',
     'ClusterGroupBulkEditForm',
     'ClusterTypeBulkEditForm',
+    'VirtualDiskBulkEditForm',
     'VirtualMachineBulkEditForm',
     'VMInterfaceBulkEditForm',
     'VMInterfaceBulkRenameForm',
@@ -315,3 +316,19 @@ class VMInterfaceBulkRenameForm(BulkRenameForm):
         queryset=VMInterface.objects.all(),
         widget=forms.MultipleHiddenInput()
     )
+
+
+class VirtualDiskBulkEditForm(NetBoxModelBulkEditForm):
+    virtual_machine = forms.ModelChoiceField(
+        label=_('Virtual machine'),
+        queryset=VirtualMachine.objects.all(),
+        required=False,
+        disabled=True,
+        widget=forms.HiddenInput()
+    )
+
+    model = VirtualDisk
+    fieldsets = (
+        (None, ('mtu', 'enabled', 'vrf', 'size')),
+    )
+    nullable_fields = ()
