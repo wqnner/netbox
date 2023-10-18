@@ -371,3 +371,42 @@ class VMInterface(NetBoxModel, BaseInterface, TrackingModelMixin):
     @property
     def l2vpn_termination(self):
         return self.l2vpn_terminations.first()
+
+
+class VirtualDisk(NetBoxModel, TrackingModelMixin):
+    virtual_machine = models.ForeignKey(
+        to=VirtualMachine,
+        on_delete=models.CASCADE,
+        related_name='%(class)ss'
+    )
+    name = models.CharField(
+        verbose_name=_('name'),
+        max_length=64
+    )
+    _name = NaturalOrderingField(
+        target_field='name',
+        max_length=100,
+        blank=True
+    )
+    size = models.PositiveIntegerField(
+        verbose_name=_('size'),
+        blank=True,
+        null=True,
+        help_text=_("Size")
+    )
+
+    class Meta:
+        ordering = ('_name', 'pk')  # Name may be non-unique
+        verbose_name = _('virtual disk')
+        verbose_name_plural = _('virtual disks')
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('virtualization:virtualdisk', args=[self.pk])
+
+    def to_objectchange(self, action):
+        objectchange = super().to_objectchange(action)
+        objectchange.related_object = self.virtual_machine
+        return objectchange
