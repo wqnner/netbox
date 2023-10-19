@@ -9,6 +9,7 @@ from virtualization.models import VirtualDisk, VirtualMachine, VMInterface
 __all__ = (
     'VirtualDiskTable',
     'VirtualMachineTable',
+    'VirtualMachineVirtualDiskTable',
     'VirtualMachineVMInterfaceTable',
     'VMInterfaceTable',
 )
@@ -161,7 +162,31 @@ class VirtualMachineVMInterfaceTable(VMInterfaceTable):
         }
 
 
-class VirtualDiskTable(VMInterfaceTable):
+class VirtualDiskTable(NetBoxTable):
+    virtual_machine = tables.Column(
+        verbose_name=_('Virtual Machine'),
+        linkify=True
+    )
+    name = tables.Column(
+        verbose_name=_('Name'),
+        linkify=True
+    )
+    tags = columns.TagColumn(
+        url_name='virtualization:virtualdisk_list'
+    )
+
+    class Meta(NetBoxTable.Meta):
+        model = VirtualDisk
+        fields = (
+            'pk', 'id', 'name', 'size', 'tags',
+        )
+        default_columns = ('pk', 'name', 'size')
+        row_attrs = {
+            'data-name': lambda record: record.name,
+        }
+
+
+class VirtualMachineVirtualDiskTable(VirtualDiskTable):
     actions = columns.ActionsColumn(
         actions=('edit', 'delete'),
     )
@@ -169,9 +194,9 @@ class VirtualDiskTable(VMInterfaceTable):
     class Meta(NetBoxTable.Meta):
         model = VirtualDisk
         fields = (
-            'pk', 'id', 'name', 'size', 'tags', 'actions',
+            'pk', 'id', 'name', 'tags', 'actions',
         )
-        default_columns = ('pk', 'name', 'size')
+        default_columns = ('pk', 'name',)
         row_attrs = {
             'data-name': lambda record: record.name,
         }

@@ -365,8 +365,31 @@ class VirtualMachineInterfacesView(generic.ObjectChildrenView):
         permission='virtualization.view_vminterface',
         weight=500
     )
+    actions = ('add', 'import', 'export', 'bulk_edit', 'bulk_delete', 'bulk_rename')
+    action_perms = defaultdict(set, **{
+        'add': {'add'},
+        'import': {'add'},
+        'bulk_edit': {'change'},
+        'bulk_delete': {'delete'},
+        'bulk_rename': {'change'},
+    })
+
+    def get_children(self, request, parent):
+        return parent.interfaces.restrict(request.user, 'view').prefetch_related(
+            Prefetch('ip_addresses', queryset=IPAddress.objects.restrict(request.user)),
+            'tags',
+        )
+
+
+@register_model_view(VirtualMachine, 'disks')
+class VirtualMachineVirtualDisksView(generic.ObjectChildrenView):
+    queryset = VirtualMachine.objects.all()
+    child_model = VirtualDisk
+    table = tables.VirtualMachineVirtualDiskTable
+    filterset = filtersets.VirtualDiskFilterSet
+    template_name = 'virtualization/virtualmachine/virtual_disks.html'
     tab = ViewTab(
-        label=_('Disks'),
+        label=_('Virtual Disks'),
         badge=lambda obj: obj.virtual_disk_count,
         permission='virtualization.view_virtual_disk',
         weight=500
@@ -381,8 +404,7 @@ class VirtualMachineInterfacesView(generic.ObjectChildrenView):
     })
 
     def get_children(self, request, parent):
-        return parent.interfaces.restrict(request.user, 'view').prefetch_related(
-            Prefetch('ip_addresses', queryset=IPAddress.objects.restrict(request.user)),
+        return parent.virtualdisks.restrict(request.user, 'view').prefetch_related(
             'tags',
         )
 
