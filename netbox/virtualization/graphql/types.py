@@ -57,7 +57,7 @@ class VMInterfaceType(IPAddressesMixin, ComponentObjectType):
         return self.mode or None
 
 
-class VirtualDiskType(NetBoxObjectType):
+class VirtualDiskType(ComponentObjectType):
 
     class Meta:
         model = models.VirtualDisk
