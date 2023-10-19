@@ -228,7 +228,7 @@ class VirtualDiskFilterForm(NetBoxModelFilterSetForm):
     model = VirtualDisk
     fieldsets = (
         (None, ('q', 'filter_id', 'tag')),
-        # (_('Virtual Machine'), ('virtual_machine_id')),
+        (_('Virtual Machine'), ('virtual_machine_id',)),
     )
     virtual_machine_id = DynamicModelMultipleChoiceField(
         queryset=VirtualMachine.objects.all(),
