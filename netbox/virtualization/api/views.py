@@ -5,7 +5,7 @@ from extras.api.mixins import ConfigContextQuerySetMixin
 from netbox.api.viewsets import NetBoxModelViewSet
 from utilities.utils import count_related
 from virtualization import filtersets
-from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualMachine, VMInterface
+from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
 from . import serializers
 
 
@@ -86,4 +86,13 @@ class VMInterfaceViewSet(NetBoxModelViewSet):
     )
     serializer_class = serializers.VMInterfaceSerializer
     filterset_class = filtersets.VMInterfaceFilterSet
+    brief_prefetch_fields = ['virtual_machine']
+
+
+class VirtualDiskViewSet(NetBoxModelViewSet):
+    queryset = VirtualDisk.objects.prefetch_related(
+        'virtual_machine', 'tags',
+    )
+    serializer_class = serializers.VirtualDiskSerializer
+    filterset_class = filtersets.VirtualDiskFilterSet
     brief_prefetch_fields = ['virtual_machine']

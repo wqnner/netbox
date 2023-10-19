@@ -360,7 +360,7 @@ class VirtualDiskForm(NetBoxModelForm):
     )
 
     fieldsets = (
-        (_(''), ('virtual_machine', 'name', 'size', 'tags')),
+        (None, ('virtual_machine', 'name', 'size', 'tags')),
     )
 
     class Meta:

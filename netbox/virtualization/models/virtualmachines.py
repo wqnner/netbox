@@ -390,10 +390,9 @@ class VirtualDisk(NetBoxModel, TrackingModelMixin):
         blank=True
     )
     size = models.PositiveIntegerField(
-        verbose_name=_('size'),
+        verbose_name=_('size (GB)'),
         blank=True,
         null=True,
-        help_text=_("Size")
     )
 
     class Meta:

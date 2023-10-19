@@ -14,7 +14,7 @@ from netbox.api.fields import ChoiceField, SerializedPKRelatedField
 from netbox.api.serializers import NetBoxModelSerializer
 from tenancy.api.nested_serializers import NestedTenantSerializer
 from virtualization.choices import *
-from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualMachine, VMInterface
+from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
 from .nested_serializers import *
 
 
@@ -159,3 +159,18 @@ class VMInterfaceSerializer(NetBoxModelSerializer):
                 })
 
         return super().validate(data)
+
+
+#
+# Virtual Disk
+#
+
+class VirtualDiskSerializer(NetBoxModelSerializer):
+    virtual_machine = NestedVirtualMachineSerializer()
+
+    class Meta:
+        model = VirtualDisk
+        fields = [
+            'id', 'virtual_machine', 'size', 'tags', 'custom_fields',
+            'created', 'last_updated',
+        ]

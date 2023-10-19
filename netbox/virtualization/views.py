@@ -591,35 +591,6 @@ class VirtualDiskListView(generic.ObjectListView):
 class VirtualDiskView(generic.ObjectView):
     queryset = VirtualDisk.objects.all()
 
-    def get_extra_context(self, request, instance):
-
-        # Get child interfaces
-        child_interfaces = VirtualDisk.objects.restrict(request.user, 'view').filter(parent=instance)
-        child_interfaces_tables = tables.VirtualDiskTable(
-            child_interfaces,
-            exclude=('virtual_machine',),
-            orderable=False
-        )
-
-        # Get assigned VLANs and annotate whether each is tagged or untagged
-        vlans = []
-        if instance.untagged_vlan is not None:
-            vlans.append(instance.untagged_vlan)
-            vlans[0].tagged = False
-        for vlan in instance.tagged_vlans.restrict(request.user).prefetch_related('site', 'group', 'tenant', 'role'):
-            vlan.tagged = True
-            vlans.append(vlan)
-        vlan_table = InterfaceVLANTable(
-            interface=instance,
-            data=vlans,
-            orderable=False
-        )
-
-        return {
-            'child_interfaces_table': child_interfaces_tables,
-            'vlan_table': vlan_table,
-        }
-
 
 # class VirtualDiskCreateView(generic.ComponentCreateView):
 #     queryset = VirtualDisk.objects.all()
