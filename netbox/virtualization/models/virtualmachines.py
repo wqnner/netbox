@@ -131,6 +131,10 @@ class VirtualMachine(ContactsMixin, RenderConfigMixin, ConfigContextModel, Prima
         to_model='virtualization.VMInterface',
         to_field='virtual_machine'
     )
+    virtual_disk_count = CounterCacheField(
+        to_model='virtualization.VirtualDisk',
+        to_field='virtual_machine'
+    )
 
     objects = ConfigContextModelQuerySet.as_manager()
 

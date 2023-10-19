@@ -365,6 +365,12 @@ class VirtualMachineInterfacesView(generic.ObjectChildrenView):
         permission='virtualization.view_vminterface',
         weight=500
     )
+    tab = ViewTab(
+        label=_('Disks'),
+        badge=lambda obj: obj.virtual_disk_count,
+        permission='virtualization.view_virtual_disk',
+        weight=500
+    )
     actions = ('add', 'import', 'export', 'bulk_edit', 'bulk_delete', 'bulk_rename')
     action_perms = defaultdict(set, **{
         'add': {'add'},

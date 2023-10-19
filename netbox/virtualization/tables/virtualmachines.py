@@ -85,6 +85,9 @@ class VirtualMachineTable(TenancyColumnsMixin, ContactsColumnMixin, NetBoxTable)
     interface_count = tables.Column(
         verbose_name=_('Interfaces')
     )
+    virtual_disk_count = tables.Column(
+        verbose_name=_('Virtual Disks')
+    )
     config_template = tables.Column(
         verbose_name=_('Config Template'),
         linkify=True
