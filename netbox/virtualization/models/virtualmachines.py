@@ -120,6 +120,7 @@ class VirtualMachine(ContactsMixin, RenderConfigMixin, ConfigContextModel, Prima
         null=True,
         verbose_name=_('memory (MB)')
     )
+    # TODO: Remove in v4.0
     disk = models.PositiveIntegerField(
         blank=True,
         null=True,
