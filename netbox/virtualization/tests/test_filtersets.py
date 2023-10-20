@@ -547,9 +547,9 @@ class VirtualDiskTestCase(TestCase, ChangeLoggedFilterSetTests):
         VirtualMachine.objects.bulk_create(vms)
 
         disks = (
-            VirtualDisk(virtual_machine=vms[0], name='Disk 1', size=123,),
-            VirtualDisk(virtual_machine=vms[1], name='Disk 2', size=456,),
-            VirtualDisk(virtual_machine=vms[2], name='Disk 3', size=789,),
+            VirtualDisk(virtual_machine=vms[0], name='Disk 1', size=1,),
+            VirtualDisk(virtual_machine=vms[1], name='Disk 2', size=2,),
+            VirtualDisk(virtual_machine=vms[2], name='Disk 3', size=3,),
         )
         VirtualDisk.objects.bulk_create(disks)
 
