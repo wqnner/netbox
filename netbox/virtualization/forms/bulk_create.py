@@ -37,9 +37,4 @@ class VirtualDiskBulkCreateForm(
     form_from_model(VirtualDisk, ['size', 'tags']),
     VirtualMachineBulkAddComponentForm
 ):
-    size = forms.IntegerField(
-        required=False,
-        label=_('Size (GB)')
-    )
-
-    replication_fields = ('name', 'size')
+    replication_fields = ('name',)

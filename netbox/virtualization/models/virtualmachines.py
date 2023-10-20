@@ -414,3 +414,7 @@ class VirtualDisk(NetBoxModel, TrackingModelMixin):
         objectchange = super().to_objectchange(action)
         objectchange.related_object = self.virtual_machine
         return objectchange
+
+    @property
+    def parent_object(self):
+        return self.virtual_machine
