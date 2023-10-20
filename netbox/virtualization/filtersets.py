@@ -16,6 +16,7 @@ __all__ = (
     'ClusterFilterSet',
     'ClusterGroupFilterSet',
     'ClusterTypeFilterSet',
+    'VirtualDiskFilterSet',
     'VirtualMachineFilterSet',
     'VMInterfaceFilterSet',
 )

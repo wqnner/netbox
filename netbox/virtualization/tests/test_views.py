@@ -7,7 +7,7 @@ from dcim.models import DeviceRole, Platform, Site
 from ipam.models import VLAN, VRF
 from utilities.testing import ViewTestCases, create_tags, create_test_device
 from virtualization.choices import *
-from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualMachine, VMInterface
+from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
 
 
 class ClusterGroupTestCase(ViewTestCases.OrganizationalObjectViewTestCase):
@@ -373,4 +373,62 @@ class VMInterfaceTestCase(ViewTestCases.DeviceComponentViewTestCase):
             'mode': InterfaceModeChoices.MODE_TAGGED,
             'untagged_vlan': vlans[0].pk,
             'tagged_vlans': [v.pk for v in vlans[1:4]],
+        }
+
+
+class VirtualDiskTestCase(ViewTestCases.DeviceComponentViewTestCase):
+    model = VirtualDisk
+    validation_excluded_fields = ('name',)
+
+    @classmethod
+    def setUpTestData(cls):
+
+        site = Site.objects.create(name='Site 1', slug='site-1')
+        role = DeviceRole.objects.create(name='Device Role 1', slug='device-role-1')
+        clustertype = ClusterType.objects.create(name='Cluster Type 1', slug='cluster-type-1')
+        cluster = Cluster.objects.create(name='Cluster 1', type=clustertype, site=site)
+        virtualmachines = (
+            VirtualMachine(name='Virtual Machine 1', site=site, cluster=cluster, role=role),
+            VirtualMachine(name='Virtual Machine 2', site=site, cluster=cluster, role=role),
+        )
+        VirtualMachine.objects.bulk_create(virtualmachines)
+
+        disks = VirtualDisk.objects.bulk_create([
+            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 1'),
+            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 2'),
+            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 3'),
+        ])
+
+        tags = create_tags('Alpha', 'Bravo', 'Charlie')
+
+        cls.form_data = {
+            'virtual_machine': virtualmachines[0].pk,
+            'name': 'Interface X',
+            'size': 123,
+            'tags': [t.pk for t in tags],
+        }
+
+        cls.bulk_create_data = {
+            'virtual_machine': virtualmachines[1].pk,
+            'name': 'Interface [4-6]',
+            'size': 456,
+            'tags': [t.pk for t in tags],
+        }
+
+        cls.csv_data = (
+            f"virtual_machine,name,size",
+            f"Virtual Machine 2,Disk 4,111",
+            f"Virtual Machine 2,Disk 5,222",
+            f"Virtual Machine 2,Disk 6,333",
+        )
+
+        cls.csv_update_data = (
+            f"id,name,size",
+            f"{disks[0].pk},Disk 7,777",
+            f"{disks[1].pk},Disk 8,888",
+            f"{disks[2].pk},Disk 9,999",
+        )
+
+        cls.bulk_edit_data = {
+            'size': 444,
         }

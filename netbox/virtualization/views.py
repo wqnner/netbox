@@ -625,6 +625,11 @@ class VirtualDiskBulkEditView(generic.BulkEditView):
     form = forms.VirtualDiskBulkEditForm
 
 
+class VirtualDiskBulkRenameView(generic.BulkRenameView):
+    queryset = VirtualDisk.objects.all()
+    form = forms.VirtualDiskBulkRenameForm
+
+
 class VirtualDiskBulkDeleteView(generic.BulkDeleteView):
     queryset = VirtualDisk.objects.all()
     filterset = filtersets.VirtualDiskFilterSet
