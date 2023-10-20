@@ -602,6 +602,12 @@ class VirtualDiskView(generic.ObjectView):
     queryset = VirtualDisk.objects.all()
 
 
+class VirtualDiskCreateView(generic.ComponentCreateView):
+    queryset = VirtualDisk.objects.all()
+    form = forms.VirtualDiskCreateForm
+    model_form = forms.VirtualDiskForm
+
+
 @register_model_view(VirtualDisk, 'edit')
 class VirtualDiskEditView(generic.ObjectEditView):
     queryset = VirtualDisk.objects.all()

@@ -403,14 +403,14 @@ class VirtualDiskTestCase(ViewTestCases.DeviceComponentViewTestCase):
 
         cls.form_data = {
             'virtual_machine': virtualmachines[0].pk,
-            'name': 'Interface X',
+            'name': 'Disk X',
             'size': 123,
             'tags': [t.pk for t in tags],
         }
 
         cls.bulk_create_data = {
             'virtual_machine': virtualmachines[1].pk,
-            'name': 'Interface [4-6]',
+            'name': 'Disk [4-6]',
             'size': 456,
             'tags': [t.pk for t in tags],
         }

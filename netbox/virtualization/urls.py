@@ -50,7 +50,7 @@ urlpatterns = [
 
     # Virtual disks
     path('disks/', views.VirtualDiskListView.as_view(), name='virtualdisk_list'),
-    path('disks/add/', views.VirtualDiskEditView.as_view(), name='virtualdisk_add'),
+    path('disks/add/', views.VirtualDiskCreateView.as_view(), name='virtualdisk_add'),
     path('disks/import/', views.VirtualDiskBulkImportView.as_view(), name='virtualdisk_import'),
     path('disks/edit/', views.VirtualDiskBulkEditView.as_view(), name='virtualdisk_bulk_edit'),
     path('disks/rename/', views.VirtualDiskBulkRenameView.as_view(), name='virtualdisk_bulk_rename'),
