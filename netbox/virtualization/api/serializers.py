@@ -167,11 +167,11 @@ class VMInterfaceSerializer(NetBoxModelSerializer):
 #
 
 class VirtualDiskSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='virtualization-api:virtualdisk-detail')
     virtual_machine = NestedVirtualMachineSerializer()
 
     class Meta:
         model = VirtualDisk
         fields = [
-            'id', 'virtual_machine', 'size', 'tags', 'custom_fields',
-            'created', 'last_updated',
+            'id', 'url', 'virtual_machine', 'name', 'size', 'tags', 'custom_fields', 'created', 'last_updated',
         ]
