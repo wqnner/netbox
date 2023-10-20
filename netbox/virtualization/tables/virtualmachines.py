@@ -194,9 +194,9 @@ class VirtualMachineVirtualDiskTable(VirtualDiskTable):
     class Meta(NetBoxTable.Meta):
         model = VirtualDisk
         fields = (
-            'pk', 'id', 'name', 'tags', 'actions',
+            'pk', 'id', 'name', 'size', 'tags', 'actions',
         )
-        default_columns = ('pk', 'name',)
+        default_columns = ('pk', 'name', 'size')
         row_attrs = {
             'data-name': lambda record: record.name,
         }

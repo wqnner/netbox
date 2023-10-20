@@ -587,24 +587,6 @@ class VMInterfaceBulkDeleteView(generic.BulkDeleteView):
 
 
 #
-# Bulk Device component creation
-#
-
-class VirtualMachineBulkAddInterfaceView(generic.BulkComponentCreateView):
-    parent_model = VirtualMachine
-    parent_field = 'virtual_machine'
-    form = forms.VMInterfaceBulkCreateForm
-    queryset = VMInterface.objects.all()
-    model_form = forms.VMInterfaceForm
-    filterset = filtersets.VirtualMachineFilterSet
-    table = tables.VirtualMachineTable
-    default_return_url = 'virtualization:virtualmachine_list'
-
-    def get_required_permission(self):
-        return f'virtualization.add_vminterface'
-
-
-#
 # Virtual Disk
 #
 
@@ -618,12 +600,6 @@ class VirtualDiskListView(generic.ObjectListView):
 @register_model_view(VirtualDisk)
 class VirtualDiskView(generic.ObjectView):
     queryset = VirtualDisk.objects.all()
-
-
-# class VirtualDiskCreateView(generic.ComponentCreateView):
-#     queryset = VirtualDisk.objects.all()
-#     form = forms.VirtualDiskCreateForm
-#     model_form = forms.VirtualDiskForm
 
 
 @register_model_view(VirtualDisk, 'edit')
@@ -653,3 +629,35 @@ class VirtualDiskBulkDeleteView(generic.BulkDeleteView):
     queryset = VirtualDisk.objects.all()
     filterset = filtersets.VirtualDiskFilterSet
     table = tables.VirtualDiskTable
+
+
+#
+# Bulk Device component creation
+#
+
+class VirtualMachineBulkAddInterfaceView(generic.BulkComponentCreateView):
+    parent_model = VirtualMachine
+    parent_field = 'virtual_machine'
+    form = forms.VMInterfaceBulkCreateForm
+    queryset = VMInterface.objects.all()
+    model_form = forms.VMInterfaceForm
+    filterset = filtersets.VirtualMachineFilterSet
+    table = tables.VirtualMachineTable
+    default_return_url = 'virtualization:virtualmachine_list'
+
+    def get_required_permission(self):
+        return f'virtualization.add_vminterface'
+
+
+class VirtualMachineBulkAddVirtualDiskView(generic.BulkComponentCreateView):
+    parent_model = VirtualMachine
+    parent_field = 'virtual_machine'
+    form = forms.VirtualDiskBulkCreateForm
+    queryset = VirtualDisk.objects.all()
+    model_form = forms.VirtualDiskForm
+    filterset = filtersets.VirtualMachineFilterSet
+    table = tables.VirtualMachineTable
+    default_return_url = 'virtualization:virtualmachine_list'
+
+    def get_required_permission(self):
+        return f'virtualization.add_virtualdisk'

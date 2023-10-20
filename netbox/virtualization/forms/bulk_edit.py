@@ -326,9 +326,13 @@ class VirtualDiskBulkEditForm(NetBoxModelBulkEditForm):
         disabled=True,
         widget=forms.HiddenInput()
     )
+    size = forms.IntegerField(
+        required=False,
+        label=_('Size (GB)')
+    )
 
     model = VirtualDisk
     fieldsets = (
-        (None, ('mtu', 'enabled', 'vrf', 'size')),
+        (None, ('size',)),
     )
     nullable_fields = ()

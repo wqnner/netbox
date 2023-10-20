@@ -6,6 +6,7 @@ from utilities.forms.fields import ExpandableNameField
 from virtualization.models import VirtualDisk, VMInterface, VirtualMachine
 
 __all__ = (
+    'VirtualDiskBulkCreateForm',
     'VMInterfaceBulkCreateForm',
 )
 
@@ -33,7 +34,12 @@ class VMInterfaceBulkCreateForm(
 
 
 class VirtualDiskBulkCreateForm(
-    form_from_model(VirtualDisk, ['tags']),
+    form_from_model(VirtualDisk, ['size', 'tags']),
     VirtualMachineBulkAddComponentForm
 ):
+    size = forms.IntegerField(
+        required=False,
+        label=_('Size (GB)')
+    )
+
     replication_fields = ('name', 'size')
