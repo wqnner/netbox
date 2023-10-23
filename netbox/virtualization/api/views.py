@@ -5,7 +5,7 @@ from extras.api.mixins import ConfigContextQuerySetMixin
 from netbox.api.viewsets import NetBoxModelViewSet
 from utilities.utils import count_related
 from virtualization import filtersets
-from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
+from virtualization.models import *
 from . import serializers
 
 

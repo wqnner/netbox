@@ -6,7 +6,7 @@ from dcim.models import Site
 from ipam.models import VLAN, VRF
 from utilities.testing import APITestCase, APIViewTestCases, create_test_device
 from virtualization.choices import *
-from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
+from virtualization.models import *
 
 
 class AppTest(APITestCase):
