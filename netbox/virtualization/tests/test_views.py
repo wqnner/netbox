@@ -394,9 +394,9 @@ class VirtualDiskTestCase(ViewTestCases.DeviceComponentViewTestCase):
         VirtualMachine.objects.bulk_create(virtualmachines)
 
         disks = VirtualDisk.objects.bulk_create([
-            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 1'),
-            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 2'),
-            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 3'),
+            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 1', size=123),
+            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 2', size=456),
+            VirtualDisk(virtual_machine=virtualmachines[0], name='Disk 3', size=789),
         ])
 
         tags = create_tags('Alpha', 'Bravo', 'Charlie')
