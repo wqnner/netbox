@@ -299,7 +299,7 @@ class VirtualDiskTest(APIViewTestCases.APIViewTestCase):
     model = VirtualDisk
     brief_fields = ['id', 'name', 'size', 'url', 'virtual_machine']
     bulk_update_data = {
-        'name': 'New name',
+        'size': 888,
     }
     graphql_base_name = 'virtual_disk'
 
