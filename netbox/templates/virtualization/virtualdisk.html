@@ -7,9 +7,7 @@
 {% block breadcrumbs %}
   {{ block.super }}
   <li class="breadcrumb-item">
-    {% comment %}
-     <a href="{% url 'virtualization:virtualmachine_virtualdisks' pk=object.virtual_machine.pk %}">{{ object.virtual_machine }}</a>
-    {% endcomment %}
+     <a href="{% url 'virtualization:virtualmachine_disks' pk=object.virtual_machine.pk %}">{{ object.virtual_machine }}</a>
   </li>
 {% endblock %}
 

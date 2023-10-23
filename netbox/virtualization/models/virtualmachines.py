@@ -124,7 +124,8 @@ class VirtualMachine(ContactsMixin, RenderConfigMixin, ConfigContextModel, Prima
     disk = models.PositiveIntegerField(
         blank=True,
         null=True,
-        verbose_name=_('disk (GB)')
+        verbose_name=_('disk (GB)'),
+        help_text=_('deprecated - use Virtual Disks')
     )
 
     # Counter fields
