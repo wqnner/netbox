@@ -191,12 +191,8 @@ class VirtualMachineVirtualDiskTable(VirtualDiskTable):
         actions=('edit', 'delete'),
     )
 
-    class Meta(NetBoxTable.Meta):
-        model = VirtualDisk
+    class Meta(VirtualDiskTable.Meta):
         fields = (
             'pk', 'id', 'name', 'size', 'tags', 'actions',
         )
         default_columns = ('pk', 'name', 'size')
-        row_attrs = {
-            'data-name': lambda record: record.name,
-        }

@@ -6,7 +6,7 @@ from tenancy.models import Tenant, TenantGroup
 from utilities.testing import ChangeLoggedFilterSetTests, create_test_device
 from virtualization.choices import *
 from virtualization.filtersets import *
-from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
+from virtualization.models import *
 
 
 class ClusterTypeTestCase(TestCase, ChangeLoggedFilterSetTests):

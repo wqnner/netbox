@@ -7,7 +7,7 @@ from dcim.models import DeviceRole, Platform, Site
 from ipam.models import VLAN, VRF
 from utilities.testing import ViewTestCases, create_tags, create_test_device
 from virtualization.choices import *
-from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
+from virtualization.models import *
 
 
 class ClusterGroupTestCase(ViewTestCases.OrganizationalObjectViewTestCase):

@@ -22,12 +22,12 @@ from tenancy.views import ObjectContactsView
 from utilities.utils import count_related
 from utilities.views import ViewTab, register_model_view
 from . import filtersets, forms, tables
-from .models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
-
+from .models import *
 
 #
 # Cluster types
 #
+
 
 class ClusterTypeListView(generic.ObjectListView):
     queryset = ClusterType.objects.annotate(
@@ -391,19 +391,17 @@ class VirtualMachineVirtualDisksView(generic.ObjectChildrenView):
         permission='virtualization.view_virtual_disk',
         weight=500
     )
-    actions = ('add', 'import', 'export', 'bulk_edit', 'bulk_delete', 'bulk_rename')
-    action_perms = defaultdict(set, **{
+    actions = {
         'add': {'add'},
         'import': {'add'},
+        'export': {'view'},
         'bulk_edit': {'change'},
         'bulk_delete': {'delete'},
         'bulk_rename': {'change'},
-    })
+    }
 
     def get_children(self, request, parent):
-        return parent.virtualdisks.restrict(request.user, 'view').prefetch_related(
-            'tags',
-        )
+        return parent.virtualdisks.restrict(request.user, 'view').prefetch_related('tags',)
 
 
 @register_model_view(VirtualMachine, 'configcontext', path='config-context')

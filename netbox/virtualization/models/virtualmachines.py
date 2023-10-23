@@ -396,12 +396,16 @@ class VirtualDisk(NetBoxModel, TrackingModelMixin):
     )
     size = models.PositiveIntegerField(
         verbose_name=_('size (GB)'),
-        blank=True,
-        null=True,
     )
 
     class Meta:
         ordering = ('_name', 'pk')  # Name may be non-unique
+        constraints = (
+            models.UniqueConstraint(
+                Lower('name'), 'virtual_machine',
+                name='%(app_label)s_%(class)s_unique_name_virtual_machine'
+            ),
+        )
         verbose_name = _('virtual disk')
         verbose_name_plural = _('virtual disks')
 
