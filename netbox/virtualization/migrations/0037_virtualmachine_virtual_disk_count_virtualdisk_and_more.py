@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'virtual disk',
                 'verbose_name_plural': 'virtual disks',
-                'ordering': ('_name', 'pk'),
+                'ordering': ('virtual_machine', '_name'),
             },
             bases=(models.Model, utilities.tracking.TrackingModelMixin),
         ),

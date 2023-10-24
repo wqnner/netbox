@@ -10,7 +10,7 @@ from netbox.filtersets import OrganizationalModelFilterSet, NetBoxModelFilterSet
 from tenancy.filtersets import TenancyFilterSet, ContactModelFilterSet
 from utilities.filters import MultiValueCharFilter, MultiValueMACAddressFilter, TreeNodeMultipleChoiceFilter
 from .choices import *
-from .models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
+from .models import *
 
 __all__ = (
     'ClusterFilterSet',

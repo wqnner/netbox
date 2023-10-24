@@ -342,7 +342,8 @@ class ClusterContactsView(ObjectContactsView):
 
 class VirtualMachineListView(generic.ObjectListView):
     queryset = VirtualMachine.objects.annotate(
-        disk_size=Sum('virtualdisks__size')).prefetch_related('primary_ip4', 'primary_ip6')
+        disk_size=Sum('virtualdisks__size')
+    ).prefetch_related('primary_ip4', 'primary_ip6')
     filterset = filtersets.VirtualMachineFilterSet
     filterset_form = forms.VirtualMachineFilterForm
     table = tables.VirtualMachineTable

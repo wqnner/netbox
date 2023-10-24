@@ -400,7 +400,7 @@ class VirtualDisk(NetBoxModel, TrackingModelMixin):
     )
 
     class Meta:
-        ordering = ('_name', 'pk')  # Name may be non-unique
+        ordering = ('virtual_machine', '_name')
         constraints = (
             models.UniqueConstraint(
                 Lower('name'), 'virtual_machine',

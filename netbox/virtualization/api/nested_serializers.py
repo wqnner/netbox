@@ -2,7 +2,7 @@ from drf_spectacular.utils import extend_schema_serializer
 from rest_framework import serializers
 
 from netbox.api.serializers import WritableNestedSerializer
-from virtualization.models import Cluster, ClusterGroup, ClusterType, VirtualDisk, VirtualMachine, VMInterface
+from virtualization.models import *
 
 __all__ = [
     'NestedClusterGroupSerializer',
