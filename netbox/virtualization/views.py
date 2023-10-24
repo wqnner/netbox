@@ -352,8 +352,7 @@ class VirtualMachineListView(generic.ObjectListView):
 
 @register_model_view(VirtualMachine)
 class VirtualMachineView(generic.ObjectView):
-    queryset = VirtualMachine.objects.all().annotate(
-        disk_size=Sum('virtualdisks__size'))
+    queryset = VirtualMachine.objects.all()
 
 
 @register_model_view(VirtualMachine, 'interfaces')
