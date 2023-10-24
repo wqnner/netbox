@@ -85,6 +85,7 @@ class VirtualMachineSerializer(NetBoxModelSerializer):
     # Counter fields
     interface_count = serializers.IntegerField(read_only=True)
     virtual_disk_count = serializers.IntegerField(read_only=True)
+    virtual_disk_size = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = VirtualMachine
@@ -92,7 +93,7 @@ class VirtualMachineSerializer(NetBoxModelSerializer):
             'id', 'url', 'display', 'name', 'status', 'site', 'cluster', 'device', 'role', 'tenant', 'platform',
             'primary_ip', 'primary_ip4', 'primary_ip6', 'vcpus', 'memory', 'disk', 'description', 'comments',
             'config_template', 'local_context_data', 'tags', 'custom_fields', 'created', 'last_updated',
-            'interface_count', 'virtual_disk_count',
+            'interface_count', 'virtual_disk_count', 'virtual_disk_size',
         ]
         validators = []
 
@@ -105,7 +106,7 @@ class VirtualMachineWithConfigContextSerializer(VirtualMachineSerializer):
             'id', 'url', 'display', 'name', 'status', 'site', 'cluster', 'device', 'role', 'tenant', 'platform',
             'primary_ip', 'primary_ip4', 'primary_ip6', 'vcpus', 'memory', 'disk', 'description', 'comments',
             'local_context_data', 'tags', 'custom_fields', 'config_context', 'created', 'last_updated',
-            'interface_count', 'virtual_disk_count',
+            'interface_count', 'virtual_disk_count', 'virtual_disk_size',
         ]
 
     @extend_schema_field(serializers.JSONField(allow_null=True))

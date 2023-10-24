@@ -1,6 +1,7 @@
 from rest_framework.routers import APIRootView
 
 from dcim.models import Device
+from django.db.models import Sum
 from extras.api.mixins import ConfigContextQuerySetMixin
 from netbox.api.viewsets import NetBoxModelViewSet
 from utilities.utils import count_related
@@ -53,7 +54,9 @@ class ClusterViewSet(NetBoxModelViewSet):
 #
 
 class VirtualMachineViewSet(ConfigContextQuerySetMixin, NetBoxModelViewSet):
-    queryset = VirtualMachine.objects.prefetch_related(
+    queryset = VirtualMachine.objects.annotate(
+        virtual_disk_size=Sum('virtualdisks__size')
+    ).prefetch_related(
         'site', 'cluster', 'device', 'role', 'tenant', 'platform', 'primary_ip4', 'primary_ip6', 'tags'
     )
     filterset_class = filtersets.VirtualMachineFilterSet
