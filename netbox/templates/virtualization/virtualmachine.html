@@ -139,7 +139,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><i class="mdi mdi-harddisk"></i> {% trans "Disk Space <i class='text-warning'>(deprecated)</i>" %}</th>
+                        <th scope="row"><i class="mdi mdi-harddisk"></i> {% trans "Disk Space" %} <i class='text-warning'>{% trans "(deprecated)" %}</i></th>
                         <td>
                             {% if object.disk %}
                                 {{ object.disk }} {% trans "GB" context "Abbreviation for gigabyte" %}
