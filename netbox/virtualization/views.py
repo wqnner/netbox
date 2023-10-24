@@ -394,16 +394,12 @@ class VirtualMachineVirtualDisksView(generic.ObjectChildrenView):
         weight=500
     )
     actions = {
-        'add': {'add'},
-        'import': {'add'},
-        'export': {'view'},
-        'bulk_edit': {'change'},
-        'bulk_delete': {'delete'},
+        **DEFAULT_ACTION_PERMISSIONS,
         'bulk_rename': {'change'},
     }
 
     def get_children(self, request, parent):
-        return parent.virtualdisks.restrict(request.user, 'view').prefetch_related('tags',)
+        return parent.virtualdisks.restrict(request.user, 'view').prefetch_related('tags')
 
 
 @register_model_view(VirtualMachine, 'configcontext', path='config-context')
