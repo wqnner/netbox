@@ -68,6 +68,15 @@ class ComponentCreateForm(forms.Form):
                     ).format(value_count=value_count, pattern_count=pattern_count)
                 }, code='label_pattern_mismatch')
 
+        if hasattr(self, 'get_iterative_data'):
+            object_name, iterative_limit = self.get_iterative_item_limit()
+            if pattern_count > iterative_limit:
+                raise forms.ValidationError({
+                    field_name: _(
+                        "The provided pattern specifies {pattern_count} values but there are not enough {object_name} selected to assign to."
+                    ).format(pattern_count=pattern_count, object_name=object_name)
+                }, code='label_pattern_mismatch')
+
 
 #
 # Device component templates
@@ -160,6 +169,9 @@ class FrontPortTemplateCreateForm(ComponentCreateForm, model_forms.FrontPortTemp
             'rear_port': int(rear_port),
             'rear_port_position': int(position),
         }
+
+    def get_iterative_item_limit(self):
+        return _('rear ports'), len(self.cleaned_data['rear_port'])
 
 
 class RearPortTemplateCreateForm(ComponentCreateForm, model_forms.RearPortTemplateForm):
@@ -300,6 +312,9 @@ class FrontPortCreateForm(ComponentCreateForm, model_forms.FrontPortForm):
             'rear_port': int(rear_port),
             'rear_port_position': int(position),
         }
+
+    def get_iterative_item_limit(self):
+        return _('rear ports'), len(self.cleaned_data['rear_port'])
 
 
 class RearPortCreateForm(ComponentCreateForm, model_forms.RearPortForm):
