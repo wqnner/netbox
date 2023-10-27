@@ -313,16 +313,16 @@ class WebhookTest(APITestCase):
             return HttpResponse()
 
         # Enqueue a webhook for processing
-        webhooks_queue = []
+        events_queue = []
         site = Site.objects.create(name='Site 1', slug='site-1')
         enqueue_object(
-            webhooks_queue,
+            events_queue,
             instance=site,
             user=self.user,
             request_id=request_id,
             action=ObjectChangeActionChoices.ACTION_CREATE
         )
-        flush_webhooks(webhooks_queue)
+        flush_webhooks(events_queue)
 
         # Retrieve the job from queue
         job = self.queue.jobs[0]
