@@ -5,7 +5,7 @@ from .webhooks import flush_webhooks
 
 
 @contextmanager
-def event_logging(request):
+def event_wrapper(request):
     """
     Enable change logging by connecting the appropriate signals to their receivers before code is run, and
     disconnecting them afterward.
