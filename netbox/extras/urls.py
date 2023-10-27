@@ -54,12 +54,12 @@ urlpatterns = [
     path('bookmarks/<int:pk>/', include(get_model_urls('extras', 'bookmark'))),
 
     # Webhooks
-    path('webhooks/', views.WebhookListView.as_view(), name='webhook_list'),
-    path('webhooks/add/', views.WebhookEditView.as_view(), name='webhook_add'),
-    path('webhooks/import/', views.WebhookBulkImportView.as_view(), name='webhook_import'),
-    path('webhooks/edit/', views.WebhookBulkEditView.as_view(), name='webhook_bulk_edit'),
-    path('webhooks/delete/', views.WebhookBulkDeleteView.as_view(), name='webhook_bulk_delete'),
-    path('webhooks/<int:pk>/', include(get_model_urls('extras', 'webhook'))),
+    path('webhooks/', views.EventListView.as_view(), name='event_list'),
+    path('webhooks/add/', views.EventEditView.as_view(), name='event_add'),
+    path('webhooks/import/', views.EventBulkImportView.as_view(), name='event_import'),
+    path('webhooks/edit/', views.EventBulkEditView.as_view(), name='event_bulk_edit'),
+    path('webhooks/delete/', views.EventBulkDeleteView.as_view(), name='event_bulk_delete'),
+    path('webhooks/<int:pk>/', include(get_model_urls('extras', 'event'))),
 
     # Tags
     path('tags/', views.TagListView.as_view(), name='tag_list'),

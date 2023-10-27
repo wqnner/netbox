@@ -79,11 +79,11 @@ def enqueue_object(queue, instance, user, request_id, action):
 
 def flush_events(queue):
     """
-    Flush a list of object representation to RQ for webhook processing.
+    Flush a list of object representation to RQ for event processing.
     """
-    rq_queue_name = get_config().QUEUE_MAPPINGS.get('webhook', RQ_QUEUE_DEFAULT)
+    rq_queue_name = get_config().QUEUE_MAPPINGS.get('event', RQ_QUEUE_DEFAULT)
     rq_queue = get_queue(rq_queue_name)
-    webhooks_cache = {
+    events_cache = {
         'type_create': {},
         'type_update': {},
         'type_delete': {},
@@ -99,18 +99,18 @@ def flush_events(queue):
         content_type = data['content_type']
 
         # Cache applicable Webhooks
-        if content_type not in webhooks_cache[action_flag]:
-            webhooks_cache[action_flag][content_type] = Webhook.objects.filter(
+        if content_type not in events_cache[action_flag]:
+            events_cache[action_flag][content_type] = Webhook.objects.filter(
                 **{action_flag: True},
                 content_types=content_type,
                 enabled=True
             )
-        webhooks = webhooks_cache[action_flag][content_type]
+        events = events_cache[action_flag][content_type]
 
-        for webhook in webhooks:
+        for event in events:
             rq_queue.enqueue(
                 "extras.webhooks_worker.process_webhook",
-                webhook=webhook,
+                webhook=event,
                 model_name=content_type.model,
                 event=data['event'],
                 data=data['data'],

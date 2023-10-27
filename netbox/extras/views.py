@@ -355,7 +355,7 @@ class BookmarkBulkDeleteView(generic.BulkDeleteView):
 # Webhooks
 #
 
-class WebhookListView(generic.ObjectListView):
+class EventListView(generic.ObjectListView):
     queryset = Webhook.objects.all()
     filterset = filtersets.WebhookFilterSet
     filterset_form = forms.WebhookFilterForm
@@ -363,34 +363,34 @@ class WebhookListView(generic.ObjectListView):
 
 
 @register_model_view(Webhook)
-class WebhookView(generic.ObjectView):
+class EventView(generic.ObjectView):
     queryset = Webhook.objects.all()
 
 
 @register_model_view(Webhook, 'edit')
-class WebhookEditView(generic.ObjectEditView):
+class EventEditView(generic.ObjectEditView):
     queryset = Webhook.objects.all()
     form = forms.WebhookForm
 
 
 @register_model_view(Webhook, 'delete')
-class WebhookDeleteView(generic.ObjectDeleteView):
+class EventDeleteView(generic.ObjectDeleteView):
     queryset = Webhook.objects.all()
 
 
-class WebhookBulkImportView(generic.BulkImportView):
+class EventBulkImportView(generic.BulkImportView):
     queryset = Webhook.objects.all()
     model_form = forms.WebhookImportForm
 
 
-class WebhookBulkEditView(generic.BulkEditView):
+class EventBulkEditView(generic.BulkEditView):
     queryset = Webhook.objects.all()
     filterset = filtersets.WebhookFilterSet
     table = tables.WebhookTable
     form = forms.WebhookBulkEditForm
 
 
-class WebhookBulkDeleteView(generic.BulkDeleteView):
+class EventBulkDeleteView(generic.BulkDeleteView):
     queryset = Webhook.objects.all()
     filterset = filtersets.WebhookFilterSet
     table = tables.WebhookTable
