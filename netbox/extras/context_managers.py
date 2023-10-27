@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 
-from netbox.context import current_request, webhooks_queue
+from netbox.context import current_request, events_queue
 from .webhooks import flush_webhooks
 
 
@@ -13,13 +13,13 @@ def event_wrapper(request):
     :param request: WSGIRequest object with a unique `id` set
     """
     current_request.set(request)
-    webhooks_queue.set([])
+    events_queue.set([])
 
     yield
 
     # Flush queued webhooks to RQ
-    flush_webhooks(webhooks_queue.get())
+    flush_webhooks(events_queue.get())
 
     # Clear context vars
     current_request.set(None)
-    webhooks_queue.set([])
+    events_queue.set([])
