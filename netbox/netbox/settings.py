@@ -671,7 +671,7 @@ GRAPHENE = {
 
 
 #
-# Django RQ (Webhooks backend)
+# Django RQ (events backend)
 #
 
 if TASKS_REDIS_USING_SENTINEL:

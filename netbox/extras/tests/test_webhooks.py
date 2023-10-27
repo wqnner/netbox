@@ -13,7 +13,7 @@ from dcim.choices import SiteStatusChoices
 from dcim.models import Site
 from extras.choices import ObjectChangeActionChoices
 from extras.models import Tag, Webhook
-from extras.webhooks import enqueue_object, flush_webhooks, generate_signature, serialize_for_webhook
+from extras.webhooks import enqueue_object, flush_events, generate_signature, serialize_for_webhook
 from extras.webhooks_worker import eval_conditions, process_webhook
 from utilities.testing import APITestCase
 
@@ -322,7 +322,7 @@ class WebhookTest(APITestCase):
             request_id=request_id,
             action=ObjectChangeActionChoices.ACTION_CREATE
         )
-        flush_webhooks(events_queue)
+        flush_events(events_queue)
 
         # Retrieve the job from queue
         job = self.queue.jobs[0]
