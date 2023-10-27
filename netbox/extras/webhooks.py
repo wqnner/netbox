@@ -77,7 +77,7 @@ def enqueue_object(queue, instance, user, request_id, action):
     })
 
 
-def flush_webhooks(queue):
+def flush_events(queue):
     """
     Flush a list of object representation to RQ for webhook processing.
     """

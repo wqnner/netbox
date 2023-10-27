@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from netbox.context import current_request, events_queue
-from .webhooks import flush_webhooks
+from .webhooks import flush_events
 
 
 @contextmanager
@@ -18,7 +18,7 @@ def event_wrapper(request):
     yield
 
     # Flush queued webhooks to RQ
-    flush_webhooks(events_queue.get())
+    flush_events(events_queue.get())
 
     # Clear context vars
     current_request.set(None)
