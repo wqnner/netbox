@@ -3,7 +3,8 @@ from collections import defaultdict
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import F, Window, Q
+from django.db.models import F, Window, Q, prefetch_related_objects
+from django.db.models.fields.related import ForeignKey
 from django.db.models.functions import window
 from django.db.models.signals import post_delete, post_save
 from django.utils.module_loading import import_string
@@ -13,7 +14,7 @@ from netaddr.core import AddrFormatError
 from extras.models import CachedValue, CustomField
 from netbox.registry import registry
 from utilities.querysets import RestrictedPrefetch
-from utilities.utils import title
+from utilities.utils import content_type_identifier, title
 from . import FieldTypes, LookupTypes, get_indexer
 
 DEFAULT_LOOKUP_TYPE = LookupTypes.PARTIAL
@@ -129,6 +130,10 @@ class CachedValueSearchBackend(SearchBackend):
             )
         )[:MAX_RESULTS]
 
+        # Find the ContentTypes for all objects present in the search results
+        content_type_ids = set(queryset.values_list('object_type', flat=True))
+        content_types = ContentType.objects.filter(pk__in=content_type_ids)
+
         # Construct a Prefetch to pre-fetch only those related objects for which the
         # user has permission to view.
         if user:
@@ -144,12 +149,31 @@ class CachedValueSearchBackend(SearchBackend):
             params
         )
 
+        # Prefetch display attributes
+        for ct in content_types:
+            model = ct.model_class()
+            indexer = registry['search'].get(content_type_identifier(ct))
+            display_attrs = getattr(indexer, 'display_attrs', None)
+            if not display_attrs:
+                continue
+
+            prefetch_fields = []
+            for attr in display_attrs:
+                field = model._meta.get_field(attr)
+                if type(field) is ForeignKey:
+                    prefetch_fields.append(f'object__{attr}')
+
+            if prefetch_fields:
+                objects = [r for r in results if r.object_type == ct]
+                prefetch_related_objects(objects, *prefetch_fields)
+
         # Omit any results pertaining to an object the user does not have permission to view
         ret = []
         for r in results:
             if r.object is not None:
                 r.name = str(r.object)
                 ret.append(r)
+
         return ret
 
     def cache(self, instances, indexer=None, remove_existing=True):

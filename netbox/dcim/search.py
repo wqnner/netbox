@@ -44,6 +44,7 @@ class DeviceIndex(SearchIndex):
         ('description', 500),
         ('comments', 5000),
     )
+    display_attrs = ('site', 'location', 'rack', 'device_type', 'description')
 
 
 @register_search
@@ -282,6 +283,7 @@ class SiteIndex(SearchIndex):
         ('shipping_address', 2000),
         ('comments', 5000),
     )
+    display_attrs = ('region', 'group', 'status', 'description')
 
 
 @register_search
