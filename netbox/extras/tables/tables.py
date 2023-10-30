@@ -16,6 +16,7 @@ __all__ = (
     'CustomFieldChoiceSetTable',
     'CustomFieldTable',
     'CustomLinkTable',
+    'EventRuleTable',
     'ExportTemplateTable',
     'ImageAttachmentTable',
     'JournalEntryTable',
@@ -311,6 +312,48 @@ class WebhookTable(NetBoxTable):
         default_columns = (
             'pk', 'name', 'content_types', 'enabled', 'type_create', 'type_update', 'type_delete', 'type_job_start',
             'type_job_end', 'http_method', 'payload_url',
+        )
+
+
+class EventRuleTable(NetBoxTable):
+    name = tables.Column(
+        verbose_name=_('Name'),
+        linkify=True
+    )
+    content_types = columns.ContentTypesColumn(
+        verbose_name=_('Content Types'),
+    )
+    enabled = columns.BooleanColumn(
+        verbose_name=_('Enabled'),
+    )
+    type_create = columns.BooleanColumn(
+        verbose_name=_('Create')
+    )
+    type_update = columns.BooleanColumn(
+        verbose_name=_('Update')
+    )
+    type_delete = columns.BooleanColumn(
+        verbose_name=_('Delete')
+    )
+    type_job_start = columns.BooleanColumn(
+        verbose_name=_('Job Start')
+    )
+    type_job_end = columns.BooleanColumn(
+        verbose_name=_('Job End')
+    )
+    tags = columns.TagColumn(
+        url_name='extras:webhook_list'
+    )
+
+    class Meta(NetBoxTable.Meta):
+        model = EventRule
+        fields = (
+            'pk', 'id', 'name', 'content_types', 'enabled', 'type_create', 'type_update', 'type_delete',
+            'type_job_start', 'type_job_end', 'tags', 'created', 'last_updated',
+        )
+        default_columns = (
+            'pk', 'name', 'content_types', 'enabled', 'type_create', 'type_update', 'type_delete', 'type_job_start',
+            'type_job_end',
         )
 
 

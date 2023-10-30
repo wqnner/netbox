@@ -18,6 +18,7 @@ __all__ = (
     'CustomFieldChoiceSetImportForm',
     'CustomFieldImportForm',
     'CustomLinkImportForm',
+    'EventRuleImportForm',
     'ExportTemplateImportForm',
     'JournalEntryImportForm',
     'SavedFilterImportForm',
@@ -154,6 +155,22 @@ class WebhookImportForm(NetBoxModelImportForm):
             'name', 'enabled', 'content_types', 'type_create', 'type_update', 'type_delete', 'type_job_start',
             'type_job_end', 'payload_url', 'http_method', 'http_content_type', 'additional_headers', 'body_template',
             'secret', 'ssl_verification', 'ca_file_path', 'tags'
+        )
+
+
+class EventRuleImportForm(NetBoxModelImportForm):
+    content_types = CSVMultipleContentTypeField(
+        label=_('Content types'),
+        queryset=ContentType.objects.all(),
+        limit_choices_to=FeatureQuery('eventrules'),
+        help_text=_("One or more assigned object types")
+    )
+
+    class Meta:
+        model = EventRule
+        fields = (
+            'name', 'enabled', 'content_types', 'type_create', 'type_update', 'type_delete', 'type_job_start',
+            'type_job_end', 'tags'
         )
 
 

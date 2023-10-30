@@ -14,6 +14,7 @@ __all__ = (
     'CustomFieldBulkEditForm',
     'CustomFieldChoiceSetBulkEditForm',
     'CustomLinkBulkEditForm',
+    'EventRuleBulkEditForm',
     'ExportTemplateBulkEditForm',
     'JournalEntryBulkEditForm',
     'SavedFilterBulkEditForm',
@@ -227,6 +228,47 @@ class WebhookBulkEditForm(NetBoxModelBulkEditForm):
     )
 
     nullable_fields = ('secret', 'conditions', 'ca_file_path')
+
+
+class EventRuleBulkEditForm(NetBoxModelBulkEditForm):
+    model = EventRule
+
+    pk = forms.ModelMultipleChoiceField(
+        queryset=EventRule.objects.all(),
+        widget=forms.MultipleHiddenInput
+    )
+    enabled = forms.NullBooleanField(
+        label=_('Enabled'),
+        required=False,
+        widget=BulkEditNullBooleanSelect()
+    )
+    type_create = forms.NullBooleanField(
+        label=_('On create'),
+        required=False,
+        widget=BulkEditNullBooleanSelect()
+    )
+    type_update = forms.NullBooleanField(
+        label=_('On update'),
+        required=False,
+        widget=BulkEditNullBooleanSelect()
+    )
+    type_delete = forms.NullBooleanField(
+        label=_('On delete'),
+        required=False,
+        widget=BulkEditNullBooleanSelect()
+    )
+    type_job_start = forms.NullBooleanField(
+        label=_('On job start'),
+        required=False,
+        widget=BulkEditNullBooleanSelect()
+    )
+    type_job_end = forms.NullBooleanField(
+        label=_('On job end'),
+        required=False,
+        widget=BulkEditNullBooleanSelect()
+    )
+
+    nullable_fields = ('conditions',)
 
 
 class TagBulkEditForm(BulkEditForm):

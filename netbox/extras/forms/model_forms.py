@@ -32,6 +32,7 @@ __all__ = (
     'CustomFieldChoiceSetForm',
     'CustomFieldForm',
     'CustomLinkForm',
+    'EventRuleForm',
     'ExportTemplateForm',
     'ImageAttachmentForm',
     'JournalEntryForm',
@@ -252,6 +253,34 @@ class WebhookForm(NetBoxModelForm):
         widgets = {
             'additional_headers': forms.Textarea(attrs={'class': 'font-monospace'}),
             'body_template': forms.Textarea(attrs={'class': 'font-monospace'}),
+            'conditions': forms.Textarea(attrs={'class': 'font-monospace'}),
+        }
+
+
+class EventRuleForm(NetBoxModelForm):
+    content_types = ContentTypeMultipleChoiceField(
+        label=_('Content types'),
+        queryset=ContentType.objects.all(),
+        limit_choices_to=FeatureQuery('eventrules')
+    )
+
+    fieldsets = (
+        (_('EventRule'), ('name', 'content_types', 'enabled', 'tags')),
+        (_('Events'), ('type_create', 'type_update', 'type_delete', 'type_job_start', 'type_job_end')),
+        (_('Conditions'), ('conditions',)),
+    )
+
+    class Meta:
+        model = Webhook
+        fields = '__all__'
+        labels = {
+            'type_create': _('Creations'),
+            'type_update': _('Updates'),
+            'type_delete': _('Deletions'),
+            'type_job_start': _('Job executions'),
+            'type_job_end': _('Job terminations'),
+        }
+        widgets = {
             'conditions': forms.Textarea(attrs={'class': 'font-monospace'}),
         }
 

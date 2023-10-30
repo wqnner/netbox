@@ -23,6 +23,7 @@ __all__ = (
     'CustomFieldChoiceSetFilterSet',
     'CustomFieldFilterSet',
     'CustomLinkFilterSet',
+    'EventRuleFilterSet',
     'ExportTemplateFilterSet',
     'ImageAttachmentFilterSet',
     'JournalEntryFilterSet',
@@ -60,6 +61,31 @@ class WebhookFilterSet(NetBoxModelFilterSet):
         return queryset.filter(
             Q(name__icontains=value) |
             Q(payload_url__icontains=value)
+        )
+
+
+class EventRuleFilterSet(NetBoxModelFilterSet):
+    q = django_filters.CharFilter(
+        method='search',
+        label=_('Search'),
+    )
+    content_type_id = MultiValueNumberFilter(
+        field_name='content_types__id'
+    )
+    content_types = ContentTypeFilter()
+
+    class Meta:
+        model = EventRule
+        fields = [
+            'id', 'name', 'type_create', 'type_update', 'type_delete', 'type_job_start', 'type_job_end',
+            'enabled',
+        ]
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        return queryset.filter(
+            Q(name__icontains=value)
         )
 
 

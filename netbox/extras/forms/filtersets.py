@@ -25,6 +25,7 @@ __all__ = (
     'CustomFieldChoiceSetFilterForm',
     'CustomFieldFilterForm',
     'CustomLinkFilterForm',
+    'EventRuleFilterForm',
     'ExportTemplateFilterForm',
     'ImageAttachmentFilterForm',
     'JournalEntryFilterForm',
@@ -237,6 +238,64 @@ class WebhookFilterForm(NetBoxModelFilterSetForm):
         choices=WebhookHttpMethodChoices,
         required=False,
         label=_('HTTP method')
+    )
+    enabled = forms.NullBooleanField(
+        label=_('Enabled'),
+        required=False,
+        widget=forms.Select(
+            choices=BOOLEAN_WITH_BLANK_CHOICES
+        )
+    )
+    type_create = forms.NullBooleanField(
+        required=False,
+        widget=forms.Select(
+            choices=BOOLEAN_WITH_BLANK_CHOICES
+        ),
+        label=_('Object creations')
+    )
+    type_update = forms.NullBooleanField(
+        required=False,
+        widget=forms.Select(
+            choices=BOOLEAN_WITH_BLANK_CHOICES
+        ),
+        label=_('Object updates')
+    )
+    type_delete = forms.NullBooleanField(
+        required=False,
+        widget=forms.Select(
+            choices=BOOLEAN_WITH_BLANK_CHOICES
+        ),
+        label=_('Object deletions')
+    )
+    type_job_start = forms.NullBooleanField(
+        required=False,
+        widget=forms.Select(
+            choices=BOOLEAN_WITH_BLANK_CHOICES
+        ),
+        label=_('Job starts')
+    )
+    type_job_end = forms.NullBooleanField(
+        required=False,
+        widget=forms.Select(
+            choices=BOOLEAN_WITH_BLANK_CHOICES
+        ),
+        label=_('Job terminations')
+    )
+
+
+class EventRuleFilterForm(NetBoxModelFilterSetForm):
+    model = EventRule
+    tag = TagFilterField(model)
+
+    fieldsets = (
+        (None, ('q', 'filter_id', 'tag')),
+        (_('Attributes'), ('content_type_id', 'enabled')),
+        (_('Events'), ('type_create', 'type_update', 'type_delete', 'type_job_start', 'type_job_end')),
+    )
+    content_type_id = ContentTypeMultipleChoiceField(
+        queryset=ContentType.objects.filter(FeatureQuery('webhooks').get_query()),
+        required=False,
+        label=_('Object type')
     )
     enabled = forms.NullBooleanField(
         label=_('Enabled'),

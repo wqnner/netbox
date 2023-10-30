@@ -30,12 +30,100 @@ __all__ = (
     'Bookmark',
     'ConfigRevision',
     'CustomLink',
+    'EventRule',
     'ExportTemplate',
     'ImageAttachment',
     'JournalEntry',
     'SavedFilter',
     'Webhook',
 )
+
+
+class EventRule(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedModel):
+    """
+    A Webhook defines a request that will be sent to a remote application when an object is created, updated, and/or
+    delete in NetBox. The request will contain a representation of the object, which the remote application can act on.
+    Each Webhook can be limited to firing only on certain actions or certain object types.
+    """
+    content_types = models.ManyToManyField(
+        to=ContentType,
+        related_name='eventrules',
+        verbose_name=_('object types'),
+        limit_choices_to=FeatureQuery('eventrules'),
+        help_text=_("The object(s) to which this Event applies.")
+    )
+    name = models.CharField(
+        verbose_name=_('name'),
+        max_length=150,
+        unique=True
+    )
+    type_create = models.BooleanField(
+        verbose_name=_('on create'),
+        default=False,
+        help_text=_("Triggers when a matching object is created.")
+    )
+    type_update = models.BooleanField(
+        verbose_name=_('on update'),
+        default=False,
+        help_text=_("Triggers when a matching object is updated.")
+    )
+    type_delete = models.BooleanField(
+        verbose_name=_('on delete'),
+        default=False,
+        help_text=_("Triggers when a matching object is deleted.")
+    )
+    type_job_start = models.BooleanField(
+        verbose_name=_('on job start'),
+        default=False,
+        help_text=_("Triggers when a job for a matching object is started.")
+    )
+    type_job_end = models.BooleanField(
+        verbose_name=_('on job end'),
+        default=False,
+        help_text=_("Triggers when a job for a matching object terminates.")
+    )
+    enabled = models.BooleanField(
+        verbose_name=_('enabled'),
+        default=True
+    )
+    conditions = models.JSONField(
+        verbose_name=_('conditions'),
+        blank=True,
+        null=True,
+        help_text=_("A set of conditions which determine whether the event will be generated.")
+    )
+
+    class Meta:
+        ordering = ('name',)
+        verbose_name = _('eventrule')
+        verbose_name_plural = _('eventrules')
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('extras:eventrule', args=[self.pk])
+
+    @property
+    def docs_url(self):
+        return f'{settings.STATIC_URL}docs/models/extras/eventrule/'
+
+    def clean(self):
+        super().clean()
+
+        # At least one action type must be selected
+        if not any([
+            self.type_create, self.type_update, self.type_delete, self.type_job_start, self.type_job_end
+        ]):
+            raise ValidationError(
+                _("At least one event type must be selected: create, update, delete, job_start, and/or job_end.")
+            )
+
+        if self.conditions:
+            try:
+                ConditionSet(self.conditions)
+            except ValueError as e:
+                raise ValidationError({'conditions': e})
 
 
 class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedModel):
