@@ -54,10 +54,8 @@ class ClusterViewSet(NetBoxModelViewSet):
 #
 
 class VirtualMachineViewSet(ConfigContextQuerySetMixin, NetBoxModelViewSet):
-    queryset = VirtualMachine.objects.annotate(
-        virtual_disk_space=Sum('virtualdisks__size')
-    ).prefetch_related(
-        'site', 'cluster', 'device', 'role', 'tenant', 'platform', 'primary_ip4', 'primary_ip6', 'tags'
+    queryset = VirtualMachine.objects.prefetch_related(
+        'site', 'cluster', 'device', 'role', 'tenant', 'platform', 'primary_ip4', 'primary_ip6', 'tags', 'virtualdisks',
     )
     filterset_class = filtersets.VirtualMachineFilterSet
 

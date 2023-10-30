@@ -112,8 +112,8 @@ class VirtualMachineTable(TenancyColumnsMixin, ContactsColumnMixin, NetBoxTable)
     def render_disk(self, value, record):
         if record.disk:
             return record.disk
-        elif record.disk_size:
-            return record.disk_size
+        elif record.virtual_disk_space:
+            return record.virtual_disk_space
         else:
             return '—'
 
