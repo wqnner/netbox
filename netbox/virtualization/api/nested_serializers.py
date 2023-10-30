@@ -81,4 +81,4 @@ class NestedVirtualDiskSerializer(WritableNestedSerializer):
 
     class Meta:
         model = VirtualDisk
-        fields = ['id', 'url', 'display', 'virtual_machine', 'name']
+        fields = ['id', 'url', 'display', 'virtual_machine', 'name', 'size']
