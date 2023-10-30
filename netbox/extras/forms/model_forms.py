@@ -261,7 +261,7 @@ class EventRuleForm(NetBoxModelForm):
     content_types = ContentTypeMultipleChoiceField(
         label=_('Content types'),
         queryset=ContentType.objects.all(),
-        limit_choices_to=FeatureQuery('eventrules')
+        limit_choices_to=FeatureQuery('webhooks')
     )
 
     fieldsets = (
@@ -271,7 +271,7 @@ class EventRuleForm(NetBoxModelForm):
     )
 
     class Meta:
-        model = Webhook
+        model = EventRule
         fields = '__all__'
         labels = {
             'type_create': _('Creations'),
