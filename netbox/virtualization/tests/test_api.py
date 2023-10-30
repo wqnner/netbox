@@ -297,7 +297,7 @@ class VMInterfaceTest(APIViewTestCases.APIViewTestCase):
 
 class VirtualDiskTest(APIViewTestCases.APIViewTestCase):
     model = VirtualDisk
-    brief_fields = ['display', 'id', 'name', 'url', 'virtual_machine']
+    brief_fields = ['display', 'id', 'name', 'size', 'url', 'virtual_machine']
     bulk_update_data = {
         'size': 888,
     }
