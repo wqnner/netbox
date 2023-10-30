@@ -93,7 +93,8 @@ class VirtualMachineTable(TenancyColumnsMixin, ContactsColumnMixin, NetBoxTable)
         verbose_name=_('Config Template'),
         linkify=True
     )
-    disk_size = tables.Column(
+    disk = tables.Column(
+        empty_values=(),
         verbose_name=_('Disk Size (GB)'),
     )
 
@@ -101,17 +102,25 @@ class VirtualMachineTable(TenancyColumnsMixin, ContactsColumnMixin, NetBoxTable)
         model = VirtualMachine
         fields = (
             'pk', 'id', 'name', 'status', 'site', 'cluster', 'device', 'role', 'tenant', 'tenant_group', 'platform',
-            'vcpus', 'memory', 'disk', 'disk_size', 'primary_ip4', 'primary_ip6', 'primary_ip', 'description', 'comments',
+            'vcpus', 'memory', 'disk', 'primary_ip4', 'primary_ip6', 'primary_ip', 'description', 'comments',
             'config_template', 'contacts', 'tags', 'created', 'last_updated',
         )
         default_columns = (
-            'pk', 'name', 'status', 'site', 'cluster', 'role', 'tenant', 'vcpus', 'memory', 'disk_size', 'primary_ip',
+            'pk', 'name', 'status', 'site', 'cluster', 'role', 'tenant', 'vcpus', 'memory', 'disk', 'primary_ip',
         )
 
+    def render_disk(self, value, record):
+        if record.disk:
+            return record.disk
+        elif record.disk_size:
+            return record.disk_size
+        else:
+            return '—'
 
 #
 # VM components
 #
+
 
 class VMInterfaceTable(BaseInterfaceTable):
     virtual_machine = tables.Column(
