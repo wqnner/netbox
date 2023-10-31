@@ -1,3 +1,6 @@
+from django.db.models import Q
+
+
 # Events
 EVENT_CREATE = 'create'
 EVENT_UPDATE = 'update'
@@ -133,3 +136,10 @@ DEFAULT_DASHBOARD = [
         }
     },
 ]
+
+EVENT_TYPE_MODELS = Q(
+    app_label='extras',
+    model__in=(
+        'webhook',
+        'script',
+    ))

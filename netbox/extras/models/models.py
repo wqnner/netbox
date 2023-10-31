@@ -93,6 +93,28 @@ class EventRule(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLogged
         help_text=_("A set of conditions which determine whether the event will be generated.")
     )
 
+    event_type = models.CharField(
+        max_length=30,
+        choices=EventRuleTypeChoices,
+        default=EventRuleTypeChoices.WEBHOOK,
+        verbose_name=_('event type')
+    )
+    # Action to take
+    object_type = models.ForeignKey(
+        to=ContentType,
+        related_name='eventrule_actions',
+        limit_choices_to=EVENT_TYPE_MODELS,
+        on_delete=models.CASCADE,
+    )
+    object_id = models.PositiveBigIntegerField(
+        blank=True,
+        null=True
+    )
+    object = GenericForeignKey(
+        ct_field='object_type',
+        fk_field='object_id',
+    )
+
     class Meta:
         ordering = ('name',)
         verbose_name = _('eventrule')

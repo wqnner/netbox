@@ -280,3 +280,18 @@ class DashboardWidgetColorChoices(ChoiceSet):
         (BLACK, _('Black')),
         (WHITE, _('White')),
     )
+
+
+#
+# Event Rules
+#
+
+class EventRuleTypeChoices(ChoiceSet):
+
+    WEBHOOK = 'webhook'
+    SCRIPT = 'script'
+
+    CHOICES = (
+        (WEBHOOK, _('Webhook'), 'webhook'),
+        (SCRIPT, _('Script'), 'script'),
+    )
