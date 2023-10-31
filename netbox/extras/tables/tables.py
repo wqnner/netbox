@@ -270,8 +270,8 @@ class BookmarkTable(NetBoxTable):
 
 
 class WebhookTable(NetBoxTable):
-    id = tables.Column(
-        verbose_name=_('ID'),
+    name = tables.Column(
+        verbose_name=_('Name'),
         linkify=True
     )
     ssl_validation = columns.BooleanColumn(
@@ -284,11 +284,11 @@ class WebhookTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = Webhook
         fields = (
-            'pk', 'id', 'http_method', 'payload_url', 'secret', 'ssl_validation', 'ca_file_path',
+            'pk', 'id', 'name', 'http_method', 'payload_url', 'secret', 'ssl_validation', 'ca_file_path',
             'tags', 'created', 'last_updated',
         )
         default_columns = (
-            'pk', 'id', 'http_method', 'payload_url',
+            'pk', 'name', 'http_method', 'payload_url',
         )
 
 
