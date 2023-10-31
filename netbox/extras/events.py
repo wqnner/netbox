@@ -15,7 +15,7 @@ from .choices import *
 from .models import Webhook
 
 
-def serialize_for_webhook(instance):
+def serialize_for_event(instance):
     """
     Return a serialized representation of the given instance suitable for use in a webhook.
     """
@@ -43,18 +43,6 @@ def get_snapshots(instance, action):
     return snapshots
 
 
-def generate_signature(request_body, secret):
-    """
-    Return a cryptographic signature that can be used to verify the authenticity of webhook data.
-    """
-    hmac_prep = hmac.new(
-        key=secret.encode('utf8'),
-        msg=request_body,
-        digestmod=hashlib.sha512
-    )
-    return hmac_prep.hexdigest()
-
-
 def enqueue_object(queue, instance, user, request_id, action):
     """
     Enqueue a serialized representation of a created/updated/deleted object for the processing of
@@ -70,7 +58,7 @@ def enqueue_object(queue, instance, user, request_id, action):
         'content_type': ContentType.objects.get_for_model(instance),
         'object_id': instance.pk,
         'event': action,
-        'data': serialize_for_webhook(instance),
+        'data': serialize_for_event(instance),
         'snapshots': get_snapshots(instance, action),
         'username': user.username,
         'request_id': request_id
@@ -83,7 +71,7 @@ def flush_events(queue):
     """
     rq_queue_name = get_config().QUEUE_MAPPINGS.get('webhook', RQ_QUEUE_DEFAULT)
     rq_queue = get_queue(rq_queue_name)
-    webhooks_cache = {
+    events_cache = {
         'type_create': {},
         'type_update': {},
         'type_delete': {},
@@ -99,18 +87,18 @@ def flush_events(queue):
         content_type = data['content_type']
 
         # Cache applicable Webhooks
-        if content_type not in webhooks_cache[action_flag]:
-            webhooks_cache[action_flag][content_type] = Webhook.objects.filter(
+        if content_type not in events_cache[action_flag]:
+            events_cache[action_flag][content_type] = Webhook.objects.filter(
                 **{action_flag: True},
                 content_types=content_type,
                 enabled=True
             )
-        webhooks = webhooks_cache[action_flag][content_type]
+        event_rules = events_cache[action_flag][content_type]
 
-        for webhook in webhooks:
+        for event_rule in event_rules:
             rq_queue.enqueue(
-                "extras.webhooks_worker.process_webhook",
-                webhook=webhook,
+                "extras.events_worker.process_event",
+                event_rule=event_rule,
                 model_name=content_type.model,
                 event=data['event'],
                 data=data['data'],

@@ -155,8 +155,8 @@ class Job(models.Model):
         self.status = JobStatusChoices.STATUS_RUNNING
         self.save()
 
-        # Handle webhooks
-        self.trigger_webhooks(event=EVENT_JOB_START)
+        # Handle events
+        self.trigger_events(event=EVENT_JOB_START)
 
     def terminate(self, status=JobStatusChoices.STATUS_COMPLETED):
         """
@@ -171,8 +171,8 @@ class Job(models.Model):
         self.completed = timezone.now()
         self.save()
 
-        # Handle webhooks
-        self.trigger_webhooks(event=EVENT_JOB_END)
+        # Handle events
+        self.trigger_events(event=EVENT_JOB_END)
 
     @classmethod
     def enqueue(cls, func, instance, name='', user=None, schedule_at=None, interval=None, **kwargs):
@@ -209,23 +209,23 @@ class Job(models.Model):
 
         return job
 
-    def trigger_webhooks(self, event):
-        from extras.models import Webhook
+    def trigger_events(self, event):
+        from extras.models import EventRule
 
         rq_queue_name = get_config().QUEUE_MAPPINGS.get('webhook', RQ_QUEUE_DEFAULT)
         rq_queue = django_rq.get_queue(rq_queue_name, is_async=False)
 
         # Fetch any webhooks matching this object type and action
-        webhooks = Webhook.objects.filter(
+        event_rules = EventRule.objects.filter(
             **{f'type_{event}': True},
             content_types=self.object_type,
             enabled=True
         )
 
-        for webhook in webhooks:
+        for event_rule in event_rules:
             rq_queue.enqueue(
-                "extras.webhooks_worker.process_webhook",
-                webhook=webhook,
+                "extras.events_worker.process_event",
+                event_rule=event_rule,
                 model_name=self.object_type.model,
                 event=event,
                 data=self.data,

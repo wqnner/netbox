@@ -15,7 +15,7 @@ from netbox.signals import post_clean
 from utilities.exceptions import AbortRequest
 from .choices import ObjectChangeActionChoices
 from .models import ConfigRevision, CustomField, ObjectChange, TaggedItem
-from .webhooks import enqueue_object, get_snapshots, serialize_for_webhook
+from .events import enqueue_object, get_snapshots, serialize_for_event
 
 #
 # Change logging/webhooks
@@ -84,7 +84,7 @@ def handle_changed_object(sender, instance, **kwargs):
     queue = events_queue.get()
     if m2m_changed and queue and is_same_object(instance, queue[-1], request.id):
         instance.refresh_from_db()  # Ensure that we're working with fresh M2M assignments
-        queue[-1]['data'] = serialize_for_webhook(instance)
+        queue[-1]['data'] = serialize_for_event(instance)
         queue[-1]['snapshots']['postchange'] = get_snapshots(instance, action)['postchange']
     else:
         enqueue_object(queue, instance, request.user, request.id, action)

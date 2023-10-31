@@ -13,7 +13,8 @@ from dcim.choices import SiteStatusChoices
 from dcim.models import Site
 from extras.choices import ObjectChangeActionChoices
 from extras.models import Tag, Webhook
-from extras.webhooks import enqueue_object, flush_events, generate_signature, serialize_for_webhook
+from extras.events import enqueue_object, flush_events, serialize_for_event
+from extras.webhooks import generate_signature
 from extras.webhooks_worker import eval_conditions, process_webhook
 from utilities.testing import APITestCase
 
@@ -272,14 +273,14 @@ class WebhookTest(APITestCase):
 
         # Create a Site to evaluate
         site = Site.objects.create(name='Site 1', slug='site-1', status=SiteStatusChoices.STATUS_STAGING)
-        data = serialize_for_webhook(site)
+        data = serialize_for_event(site)
 
         # Evaluate the conditions (status='staging')
         self.assertFalse(eval_conditions(webhook, data))
 
         # Change the site's status
         site.status = SiteStatusChoices.STATUS_ACTIVE
-        data = serialize_for_webhook(site)
+        data = serialize_for_event(site)
 
         # Evaluate the conditions (status='active')
         self.assertTrue(eval_conditions(webhook, data))
