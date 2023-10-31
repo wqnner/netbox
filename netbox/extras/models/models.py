@@ -157,6 +157,11 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
     """
     events = GenericRelation(EventRule)
 
+    name = models.CharField(
+        verbose_name=_('name'),
+        max_length=150,
+        unique=True
+    )
     payload_url = models.CharField(
         max_length=500,
         verbose_name=_('URL'),
@@ -223,12 +228,12 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
     )
 
     class Meta:
-        ordering = ('payload_url',)
+        ordering = ('name',)
         verbose_name = _('webhook')
         verbose_name_plural = _('webhooks')
 
     def __str__(self):
-        return self.payload_url
+        return self.name
 
     def get_absolute_url(self):
         return reverse('extras:webhook', args=[self.pk])

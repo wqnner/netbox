@@ -85,10 +85,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunPython(move_webhooks),
-        migrations.AlterModelOptions(
-            name='webhook',
-            options={'ordering': ('payload_url',)},
-        ),
         migrations.RemoveConstraint(
             model_name='webhook',
             name='extras_webhook_unique_payload_url_types',
@@ -104,10 +100,6 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='webhook',
             name='enabled',
-        ),
-        migrations.RemoveField(
-            model_name='webhook',
-            name='name',
         ),
         migrations.RemoveField(
             model_name='webhook',

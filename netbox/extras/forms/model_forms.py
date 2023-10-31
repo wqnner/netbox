@@ -226,7 +226,7 @@ class BookmarkForm(BootstrapMixin, forms.ModelForm):
 class WebhookForm(NetBoxModelForm):
 
     fieldsets = (
-        (_('Webhook'), ('tags',)),
+        (_('Webhook'), ('name', 'tags',)),
         (_('HTTP Request'), (
             'payload_url', 'http_method', 'http_content_type', 'additional_headers', 'body_template', 'secret',
         )),
