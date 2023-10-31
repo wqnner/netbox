@@ -39,6 +39,7 @@ __all__ = (
     'CustomFieldSerializer',
     'CustomLinkSerializer',
     'DashboardSerializer',
+    'EventRuleSerializer',
     'ExportTemplateSerializer',
     'ImageAttachmentSerializer',
     'JournalEntrySerializer',
@@ -58,22 +59,38 @@ __all__ = (
 
 
 #
-# Webhooks
+# Event Rules
 #
 
-class WebhookSerializer(NetBoxModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='extras-api:webhook-detail')
+class EventRuleSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='extras-api:eventrule-detail')
     content_types = ContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery('webhooks').get_query()),
         many=True
     )
 
     class Meta:
-        model = Webhook
+        model = EventRule
         fields = [
             'id', 'url', 'display', 'content_types', 'name', 'type_create', 'type_update', 'type_delete',
-            'type_job_start', 'type_job_end', 'payload_url', 'enabled', 'http_method', 'http_content_type',
-            'additional_headers', 'body_template', 'secret', 'conditions', 'ssl_verification', 'ca_file_path',
+            'type_job_start', 'type_job_end', 'enabled', 'conditions', 'event_type',
+            'custom_fields', 'tags', 'created', 'last_updated',
+        ]
+
+
+#
+# Webhooks
+#
+
+class WebhookSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='extras-api:webhook-detail')
+
+    class Meta:
+        model = Webhook
+        fields = [
+            'id', 'url', 'display',
+            'payload_url', 'http_method', 'http_content_type',
+            'additional_headers', 'body_template', 'secret', 'ssl_verification', 'ca_file_path',
             'custom_fields', 'tags', 'created', 'last_updated',
         ]
 
