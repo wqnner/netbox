@@ -41,6 +41,10 @@ A dictionary of particular features (e.g. custom fields) mapped to the NetBox mo
 
 Supported model features are listed in the [features matrix](./models.md#features-matrix).
 
+### `models`
+
+All NetBox models which have been registered as "public," meaning that they are intended for reference by other objects. Models for which `_netbox_private` is set to False are excluded from this list. (As with individual features under `model_features`, models are organized by app label.)
+
 ### `plugins`
 
 This store maintains all registered items for plugins, such as navigation menus, template extensions, etc.
