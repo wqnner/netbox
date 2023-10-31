@@ -7,6 +7,29 @@ import taggit.managers
 import utilities.json
 
 
+def move_webhooks(apps, schema_editor):
+    Webhook = apps.get_model("extras", "Webhook")
+    EventRule = apps.get_model("extras", "EventRule")
+
+    for webhook in Webhook.objects.all():
+        event = EventRule()
+
+        event.name = webhook.name
+        event.type_create = webhook.type_create
+        event.type_update = webhook.type_update
+        event.type_delete = webhook.type_delete
+        event.type_job_start = webhook.type_job_start
+        event.type_job_end = webhook.type_job_end
+        event.enabled = webhook.enabled
+        event.conditions = webhook.conditions
+
+        event.event_type = EventRuleTypeChoices.WEBHOOK
+        event.object_type_id = ContentType.objects.get_for_model(webhook).id
+        event.object = webhook
+        event.save()
+        event.content_types.add(*webhook.content_types.all())
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ('contenttypes', '0002_remove_content_type_name'),
@@ -58,5 +81,63 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'eventrules',
                 'ordering': ('name',),
             },
+        ),
+        migrations.RunPython(move_webhooks),
+        migrations.AlterModelOptions(
+            name='webhook',
+            options={'ordering': ('payload_url',)},
+        ),
+        migrations.RemoveConstraint(
+            model_name='webhook',
+            name='extras_webhook_unique_payload_url_types',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='conditions',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='content_types',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='enabled',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='name',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='type_create',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='type_delete',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='type_job_end',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='type_job_start',
+        ),
+        migrations.RemoveField(
+            model_name='webhook',
+            name='type_update',
+        ),
+        migrations.AlterField(
+            model_name='eventrule',
+            name='object_type',
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='eventrule_actions',
+                to='contenttypes.contenttype',
+            ),
+        ),
+        migrations.AlterUniqueTogether(
+            name='eventrule',
+            unique_together={('object_type', 'object_id')},
         ),
     ]

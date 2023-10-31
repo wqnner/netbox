@@ -152,8 +152,7 @@ class WebhookImportForm(NetBoxModelImportForm):
     class Meta:
         model = Webhook
         fields = (
-            'name', 'enabled', 'content_types', 'type_create', 'type_update', 'type_delete', 'type_job_start',
-            'type_job_end', 'payload_url', 'http_method', 'http_content_type', 'additional_headers', 'body_template',
+            'payload_url', 'http_method', 'http_content_type', 'additional_headers', 'body_template',
             'secret', 'ssl_verification', 'ca_file_path', 'tags'
         )
 

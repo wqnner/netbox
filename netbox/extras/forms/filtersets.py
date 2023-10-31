@@ -226,60 +226,12 @@ class WebhookFilterForm(NetBoxModelFilterSetForm):
 
     fieldsets = (
         (None, ('q', 'filter_id', 'tag')),
-        (_('Attributes'), ('content_type_id', 'http_method', 'enabled')),
-        (_('Events'), ('type_create', 'type_update', 'type_delete', 'type_job_start', 'type_job_end')),
-    )
-    content_type_id = ContentTypeMultipleChoiceField(
-        queryset=ContentType.objects.filter(FeatureQuery('webhooks').get_query()),
-        required=False,
-        label=_('Object type')
+        (_('Attributes'), ('http_method',)),
     )
     http_method = forms.MultipleChoiceField(
         choices=WebhookHttpMethodChoices,
         required=False,
         label=_('HTTP method')
-    )
-    enabled = forms.NullBooleanField(
-        label=_('Enabled'),
-        required=False,
-        widget=forms.Select(
-            choices=BOOLEAN_WITH_BLANK_CHOICES
-        )
-    )
-    type_create = forms.NullBooleanField(
-        required=False,
-        widget=forms.Select(
-            choices=BOOLEAN_WITH_BLANK_CHOICES
-        ),
-        label=_('Object creations')
-    )
-    type_update = forms.NullBooleanField(
-        required=False,
-        widget=forms.Select(
-            choices=BOOLEAN_WITH_BLANK_CHOICES
-        ),
-        label=_('Object updates')
-    )
-    type_delete = forms.NullBooleanField(
-        required=False,
-        widget=forms.Select(
-            choices=BOOLEAN_WITH_BLANK_CHOICES
-        ),
-        label=_('Object deletions')
-    )
-    type_job_start = forms.NullBooleanField(
-        required=False,
-        widget=forms.Select(
-            choices=BOOLEAN_WITH_BLANK_CHOICES
-        ),
-        label=_('Job starts')
-    )
-    type_job_end = forms.NullBooleanField(
-        required=False,
-        widget=forms.Select(
-            choices=BOOLEAN_WITH_BLANK_CHOICES
-        ),
-        label=_('Job terminations')
     )
 
 

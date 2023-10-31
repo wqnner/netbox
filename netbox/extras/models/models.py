@@ -2,7 +2,7 @@ import json
 import urllib.parse
 
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.validators import ValidationError
@@ -103,7 +103,7 @@ class EventRule(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLogged
     object_type = models.ForeignKey(
         to=ContentType,
         related_name='eventrule_actions',
-        limit_choices_to=EVENT_TYPE_MODELS,
+        # limit_choices_to=EVENT_TYPE_MODELS,
         on_delete=models.CASCADE,
     )
     object_id = models.PositiveBigIntegerField(
@@ -119,6 +119,7 @@ class EventRule(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLogged
         ordering = ('name',)
         verbose_name = _('eventrule')
         verbose_name_plural = _('eventrules')
+        unique_together = ('object_type', 'object_id')
 
     def __str__(self):
         return self.name
@@ -154,43 +155,8 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
     delete in NetBox. The request will contain a representation of the object, which the remote application can act on.
     Each Webhook can be limited to firing only on certain actions or certain object types.
     """
-    content_types = models.ManyToManyField(
-        to=ContentType,
-        related_name='webhooks',
-        verbose_name=_('object types'),
-        limit_choices_to=FeatureQuery('webhooks'),
-        help_text=_("The object(s) to which this Webhook applies.")
-    )
-    name = models.CharField(
-        verbose_name=_('name'),
-        max_length=150,
-        unique=True
-    )
-    type_create = models.BooleanField(
-        verbose_name=_('on create'),
-        default=False,
-        help_text=_("Triggers when a matching object is created.")
-    )
-    type_update = models.BooleanField(
-        verbose_name=_('on update'),
-        default=False,
-        help_text=_("Triggers when a matching object is updated.")
-    )
-    type_delete = models.BooleanField(
-        verbose_name=_('on delete'),
-        default=False,
-        help_text=_("Triggers when a matching object is deleted.")
-    )
-    type_job_start = models.BooleanField(
-        verbose_name=_('on job start'),
-        default=False,
-        help_text=_("Triggers when a job for a matching object is started.")
-    )
-    type_job_end = models.BooleanField(
-        verbose_name=_('on job end'),
-        default=False,
-        help_text=_("Triggers when a job for a matching object terminates.")
-    )
+    events = GenericRelation(EventRule)
+
     payload_url = models.CharField(
         max_length=500,
         verbose_name=_('URL'),
@@ -198,10 +164,6 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
             "This URL will be called using the HTTP method defined when the webhook is called. Jinja2 template "
             "processing is supported with the same context as the request body."
         )
-    )
-    enabled = models.BooleanField(
-        verbose_name=_('enabled'),
-        default=True
     )
     http_method = models.CharField(
         max_length=30,
@@ -245,12 +207,6 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
             "digest of the payload body using the secret as the key. The secret is not transmitted in the request."
         )
     )
-    conditions = models.JSONField(
-        verbose_name=_('conditions'),
-        blank=True,
-        null=True,
-        help_text=_("A set of conditions which determine whether the webhook will be generated.")
-    )
     ssl_verification = models.BooleanField(
         default=True,
         verbose_name=_('SSL verification'),
@@ -267,18 +223,12 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
     )
 
     class Meta:
-        ordering = ('name',)
-        constraints = (
-            models.UniqueConstraint(
-                fields=('payload_url', 'type_create', 'type_update', 'type_delete'),
-                name='%(app_label)s_%(class)s_unique_payload_url_types'
-            ),
-        )
+        ordering = ('payload_url',)
         verbose_name = _('webhook')
         verbose_name_plural = _('webhooks')
 
     def __str__(self):
-        return self.name
+        return self.payload_url
 
     def get_absolute_url(self):
         return reverse('extras:webhook', args=[self.pk])
@@ -289,20 +239,6 @@ class Webhook(CustomFieldsMixin, ExportTemplatesMixin, TagsMixin, ChangeLoggedMo
 
     def clean(self):
         super().clean()
-
-        # At least one action type must be selected
-        if not any([
-            self.type_create, self.type_update, self.type_delete, self.type_job_start, self.type_job_end
-        ]):
-            raise ValidationError(
-                _("At least one event type must be selected: create, update, delete, job_start, and/or job_end.")
-            )
-
-        if self.conditions:
-            try:
-                ConditionSet(self.conditions)
-            except ValueError as e:
-                raise ValidationError({'conditions': e})
 
         # CA file path requires SSL verification enabled
         if not self.ssl_verification and self.ca_file_path:
