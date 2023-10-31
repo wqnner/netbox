@@ -270,30 +270,9 @@ class BookmarkTable(NetBoxTable):
 
 
 class WebhookTable(NetBoxTable):
-    name = tables.Column(
-        verbose_name=_('Name'),
+    id = tables.Column(
+        verbose_name=_('ID'),
         linkify=True
-    )
-    content_types = columns.ContentTypesColumn(
-        verbose_name=_('Content Types'),
-    )
-    enabled = columns.BooleanColumn(
-        verbose_name=_('Enabled'),
-    )
-    type_create = columns.BooleanColumn(
-        verbose_name=_('Create')
-    )
-    type_update = columns.BooleanColumn(
-        verbose_name=_('Update')
-    )
-    type_delete = columns.BooleanColumn(
-        verbose_name=_('Delete')
-    )
-    type_job_start = columns.BooleanColumn(
-        verbose_name=_('Job Start')
-    )
-    type_job_end = columns.BooleanColumn(
-        verbose_name=_('Job End')
     )
     ssl_validation = columns.BooleanColumn(
         verbose_name=_('SSL Validation')
@@ -305,13 +284,11 @@ class WebhookTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = Webhook
         fields = (
-            'pk', 'id', 'name', 'content_types', 'enabled', 'type_create', 'type_update', 'type_delete',
-            'type_job_start', 'type_job_end', 'http_method', 'payload_url', 'secret', 'ssl_validation', 'ca_file_path',
+            'pk', 'id', 'http_method', 'payload_url', 'secret', 'ssl_validation', 'ca_file_path',
             'tags', 'created', 'last_updated',
         )
         default_columns = (
-            'pk', 'name', 'content_types', 'enabled', 'type_create', 'type_update', 'type_delete', 'type_job_start',
-            'type_job_end', 'http_method', 'payload_url',
+            'pk', 'id', 'http_method', 'payload_url',
         )
 
 
