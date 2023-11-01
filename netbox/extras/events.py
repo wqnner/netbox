@@ -12,7 +12,7 @@ from utilities.api import get_serializer_for_model
 from utilities.rqworker import get_rq_retry
 from utilities.utils import serialize_object
 from .choices import *
-from .models import Webhook
+from .models import EventRule, Webhook
 
 
 def serialize_for_event(instance):
@@ -86,9 +86,9 @@ def flush_events(queue):
         }[data['event']]
         content_type = data['content_type']
 
-        # Cache applicable Webhooks
+        # Cache applicable Event Rules
         if content_type not in events_cache[action_flag]:
-            events_cache[action_flag][content_type] = Webhook.objects.filter(
+            events_cache[action_flag][content_type] = EventRule.objects.filter(
                 **{action_flag: True},
                 content_types=content_type,
                 enabled=True
