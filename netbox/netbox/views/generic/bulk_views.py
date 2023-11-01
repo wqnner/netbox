@@ -689,16 +689,14 @@ class BulkRenameView(GetReturnURLMixin, BaseMultiObjectView):
 
             find = form.cleaned_data['find']
             replace = form.cleaned_data['replace']
-            if obj.name:
-                if form.cleaned_data['use_regex']:
-                    try:
-                        obj.new_name = re.sub(find, replace, obj.name or '')
-                    # Catch regex group reference errors
-                    except re.error:
-                        obj.new_name = obj.name
-                else:
-                    if obj.name:
-                        obj.new_name = obj.name.replace(find, replace)
+            if obj.name and form.cleaned_data['use_regex']:
+                try:
+                    obj.new_name = re.sub(find, replace, obj.name)
+                # Catch regex group reference errors
+                except re.error:
+                    obj.new_name = obj.name
+            elif obj.name:
+                obj.new_name = obj.name.replace(find, replace)
             else:
                 obj.new_name = obj.name
 
