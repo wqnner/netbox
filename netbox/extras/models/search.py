@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from netbox.search.utils import get_indexer
 from netbox.registry import registry
 from utilities.fields import RestrictedGenericForeignKey
 from utilities.utils import content_type_identifier
@@ -61,9 +62,12 @@ class CachedValue(models.Model):
 
     @property
     def display_attrs(self):
-        indexer = registry['search'].get(content_type_identifier(self.object_type))
+        """
+        Render any display attributes associated with this search result.
+        """
+        indexer = get_indexer(self.object_type)
         attrs = {}
-        for attr in getattr(indexer, 'display_attrs', []):
+        for attr in indexer.display_attrs:
             name = self.object._meta.get_field(attr).verbose_name
             if value := getattr(self.object, attr):
                 if display_func := getattr(self.object, f'get_{attr}_display', None):
