@@ -13,7 +13,7 @@ import utilities.tracking
 class Migration(migrations.Migration):
     dependencies = [
         ('extras', '0098_webhook_custom_field_data_webhook_tags'),
-        ('virtualization', '0036_virtualmachine_config_template'),
+        ('virtualization', '0037_protect_child_interfaces'),
     ]
 
     operations = [
