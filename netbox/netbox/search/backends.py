@@ -104,17 +104,17 @@ class CachedValueSearchBackend(SearchBackend):
 
     def search(self, value, user=None, object_types=None, lookup=DEFAULT_LOOKUP_TYPE):
 
+        # Build the filter used to find relevant CachedValue records
         query_filter = Q(**{f'value__{lookup}': value})
-
         if object_types:
+            # Limit results by object type
             query_filter &= Q(object_type__in=object_types)
-
         if lookup in (LookupTypes.STARTSWITH, LookupTypes.ENDSWITH):
-            # Partial string matches are valid only on string values
+            # "Starts/ends with" matches are valid only on string values
             query_filter &= Q(type=FieldTypes.STRING)
-
-        if lookup == LookupTypes.PARTIAL:
+        elif lookup == LookupTypes.PARTIAL:
             try:
+                # If the value looks like an IP address, add an extra match for CIDR values
                 address = str(netaddr.IPNetwork(value.strip()).cidr)
                 query_filter |= Q(type=FieldTypes.CIDR) & Q(value__net_contains_or_equals=address)
             except (AddrFormatError, ValueError):
@@ -130,7 +130,9 @@ class CachedValueSearchBackend(SearchBackend):
             )
         )[:MAX_RESULTS]
 
-        # Find the ContentTypes for all objects present in the search results
+        # Gather all ContentTypes present in the search results (used for prefetching related
+        # objects). This must be done before generating the final results list, which returns
+        # a RawQuerySet.
         content_type_ids = set(queryset.values_list('object_type', flat=True))
         content_types = ContentType.objects.filter(pk__in=content_type_ids)
 
@@ -149,20 +151,23 @@ class CachedValueSearchBackend(SearchBackend):
             params
         )
 
-        # Prefetch display attributes
+        # Iterate through each ContentType represented in the search results and prefetch any
+        # related objects necessary to render the prescribed display attributes (display_attrs).
         for ct in content_types:
             model = ct.model_class()
             indexer = registry['search'].get(content_type_identifier(ct))
-            display_attrs = getattr(indexer, 'display_attrs', None)
-            if not display_attrs:
+            if not (display_attrs := getattr(indexer, 'display_attrs', None)):
                 continue
 
+            # Add ForeignKey fields to prefetch list
             prefetch_fields = []
             for attr in display_attrs:
                 field = model._meta.get_field(attr)
                 if type(field) is ForeignKey:
                     prefetch_fields.append(f'object__{attr}')
 
+            # Compile a list of all CachedValues referencing this object type, and prefetch
+            # any related objects
             if prefetch_fields:
                 objects = [r for r in results if r.object_type == ct]
                 prefetch_related_objects(objects, *prefetch_fields)
