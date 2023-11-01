@@ -1,15 +1,17 @@
 import logging
 
 import requests
+import sys
 from django.conf import settings
 from django_rq import job
 from jinja2.exceptions import TemplateError
 
-from scripts.workers import process_script
 from .conditions import ConditionSet
-from .constants import WEBHOOK_EVENT_TYPES, EVENT_TYPE_MODELS
+from .choices import EventRuleTypeChoices
+from .constants import WEBHOOK_EVENT_TYPES
+from .scripts_worker import process_script
 from .webhooks import generate_signature
-from webhooks_worker import process_webhook
+from .webhooks_worker import process_webhook
 
 logger = logging.getLogger('netbox.events_worker')
 
@@ -29,6 +31,11 @@ def eval_conditions(event_rule, data):
     return False
 
 
+def import_module(name):
+    __import__(name)
+    return sys.modules[name]
+
+
 def module_member(name):
     mod, member = name.rsplit(".", 1)
     module = import_module(mod)
@@ -36,9 +43,9 @@ def module_member(name):
 
 
 def process_event_rules(event_rule, model_name, event, data, timestamp, username, request_id):
-    if event_rule.event_type == EVENT_TYPE_MODELS.WEBHOOK:
+    if event_rule.event_type == EventRuleTypeChoices.WEBHOOK:
         process_webhook(event_rule, model_name, event, data, timestamp, username, request_id)
-    elif event_rule.event_type == EVENT_TYPE_MODELS.SCRIPT:
+    elif event_rule.event_type == EventRuleTypeChoicesEventRuleTypeChoices.SCRIPT:
         process_script(event_rule, model_name, event, data, timestamp, username, request_id)
 
 

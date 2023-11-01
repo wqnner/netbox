@@ -12,10 +12,12 @@ from .webhooks import generate_signature
 logger = logging.getLogger('netbox.webhooks_worker')
 
 
-def process_webhook(webhook, model_name, event, data, timestamp, username, request_id=None):
+def process_webhook(event_rule, model_name, event, data, timestamp, username, request_id=None):
     """
     Make a POST request to the defined Webhook
     """
+
+    webhook = event_rule.object
 
     # Build the headers for the HTTP request
     headers = {

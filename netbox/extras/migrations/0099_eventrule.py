@@ -27,7 +27,7 @@ def move_webhooks(apps, schema_editor):
 
         event.event_type = EventRuleTypeChoices.WEBHOOK
         event.object_type_id = ContentType.objects.get_for_model(webhook).id
-        event.object = webhook
+        event.object_id = webhook.id
         event.save()
         event.content_types.add(*webhook.content_types.all())
 
