@@ -12,7 +12,7 @@ from .webhooks import generate_signature
 logger = logging.getLogger('netbox.webhooks_worker')
 
 
-def process_script(webhook, model_name, event, data, timestamp, username, request_id=None):
+def process_script(webhook, model_name, event, data, timestamp, username, request_id=None, snapshots=None):
     """
     Make a POST request to the defined Webhook
     """

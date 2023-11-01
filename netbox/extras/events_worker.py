@@ -42,11 +42,11 @@ def module_member(name):
     return getattr(module, member)
 
 
-def process_event_rules(event_rule, model_name, event, data, timestamp, username, request_id):
+def process_event_rules(event_rule, model_name, event, data, timestamp, username, request_id, snapshots):
     if event_rule.event_type == EventRuleTypeChoices.WEBHOOK:
-        process_webhook(event_rule, model_name, event, data, timestamp, username, request_id)
+        process_webhook(event_rule, model_name, event, data, timestamp, username, request_id, snapshots)
     elif event_rule.event_type == EventRuleTypeChoicesEventRuleTypeChoices.SCRIPT:
-        process_script(event_rule, model_name, event, data, timestamp, username, request_id)
+        process_script(event_rule, model_name, event, data, timestamp, username, request_id, snapshots)
 
 
 @job('default')
@@ -58,21 +58,7 @@ def process_event(event_rule, model_name, event, data, timestamp, username, requ
     if not eval_conditions(event_rule, data):
         return
 
-    # Prepare context data for headers & body templates
-    context = {
-        'event': WEBHOOK_EVENT_TYPES[event],
-        'timestamp': timestamp,
-        'model': model_name,
-        'username': username,
-        'request_id': request_id,
-        'data': data,
-    }
-    if snapshots:
-        context.update({
-            'snapshots': snapshots
-        })
-
     # process the events pipeline
     for name in settings.NETBOX_EVENTS_PIPELINE:
         func = module_member(name)
-        func(event_rule, model_name, event, data, timestamp, username, request_id)
+        func(event_rule, model_name, event, data, timestamp, username, request_id, snapshots)
