@@ -43,7 +43,7 @@ Supported model features are listed in the [features matrix](./models.md#feature
 
 ### `models`
 
-All NetBox models which have been registered as "public," meaning that they are intended for reference by other objects. Models for which `_netbox_private` is set to False are excluded from this list. (As with individual features under `model_features`, models are organized by app label.)
+This key lists all models which have been registered in NetBox which are not designated for private use. (Setting `_netbox_private` to True on a model excludes it from this list.) As with individual features under `model_features`, models are organized by app label.
 
 ### `plugins`
 
